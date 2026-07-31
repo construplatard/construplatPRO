@@ -3778,3 +3778,194 @@ td small {
   }
 }
 
+/* =========================================================
+   IMPRESIÓN EXCLUSIVA DE LA COTIZACIÓN
+   PEGAR AL FINAL DE app/globals.css
+========================================================= */
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    width: 210mm !important;
+    min-width: 210mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Oculta toda la aplicación */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Muestra únicamente el documento */
+  .quotation-document,
+  .quotation-document * {
+    visibility: visible !important;
+  }
+
+  /* El documento se coloca directamente sobre la hoja */
+  .quotation-document {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 0 12mm !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    color: #15253b !important;
+    background: #ffffff !important;
+    transform: none !important;
+  }
+
+  /* Oculta modal, botones y barra de vista previa */
+  .quotation-preview-toolbar,
+  .no-print,
+  .sidebar,
+  .topbar,
+  .sidebar-overlay {
+    display: none !important;
+  }
+
+  .quotation-preview-overlay,
+  .quotation-preview-shell {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    width: 210mm !important;
+    max-width: none !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Encabezado */
+  .quotation-document-header {
+    display: grid !important;
+    grid-template-columns: 46% 54% !important;
+    gap: 8mm !important;
+    padding: 11mm 13mm !important;
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #062a56, #07579b) !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .quotation-brand-block img {
+    display: block !important;
+    width: 30mm !important;
+    height: 21mm !important;
+    max-width: 30mm !important;
+    max-height: 21mm !important;
+    padding: 2mm !important;
+    object-fit: contain !important;
+    border-radius: 3mm !important;
+    background: #ffffff !important;
+  }
+
+  .quotation-brand-block h2 {
+    margin: 3mm 0 6mm !important;
+    color: #ffffff !important;
+    font-size: 20pt !important;
+  }
+
+  .quotation-brand-block b,
+  .quotation-brand-block span,
+  .quotation-document-info,
+  .quotation-document-info h1,
+  .quotation-document-info b,
+  .quotation-document-info span {
+    color: #ffffff !important;
+  }
+
+  .quotation-document-info {
+    padding-left: 8mm !important;
+    border-left: 0.3mm solid rgba(255,255,255,.7) !important;
+  }
+
+  .quotation-document-info h1 {
+    margin: 0 0 7mm !important;
+    font-size: 23pt !important;
+  }
+
+  /* Cuerpo */
+  .quotation-description {
+    margin: 8mm 13mm 6mm !important;
+    padding-top: 6mm !important;
+  }
+
+  .quotation-document-table {
+    width: calc(100% - 26mm) !important;
+    margin: 0 13mm !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+  }
+
+  .quotation-document-table th,
+  .quotation-document-table td {
+    padding: 3mm !important;
+    font-size: 9pt !important;
+  }
+
+  .quotation-document-table th:nth-child(1) {
+    width: 52% !important;
+  }
+
+  .quotation-document-table th:nth-child(2) {
+    width: 14% !important;
+  }
+
+  .quotation-document-table th:nth-child(3),
+  .quotation-document-table th:nth-child(4) {
+    width: 17% !important;
+  }
+
+  .quotation-document-table tr,
+  .quotation-document-table td {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .quotation-document-bottom {
+    display: grid !important;
+    grid-template-columns: 1fr 78mm !important;
+    gap: 8mm !important;
+    margin: 6mm 13mm 0 !important;
+    break-inside: avoid !important;
+  }
+
+  .quotation-document-note {
+    margin: 5mm 13mm !important;
+    break-inside: avoid !important;
+  }
+
+  .quotation-signatures {
+    margin: 20mm 18mm 0 !important;
+    gap: 25mm !important;
+    break-inside: avoid !important;
+  }
+
+  .quotation-document footer {
+    margin-top: 14mm !important;
+    break-inside: avoid !important;
+  }
+}
