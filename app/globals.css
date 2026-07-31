@@ -4369,3 +4369,253 @@ td small {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* =========================================================
+   IMPRESIÓN EN UNA SOLA HOJA A4
+   PEGAR AL FINAL DE app/globals.css
+========================================================= */
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-width: 210mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Oculta la aplicación sin dejar espacio adicional */
+  .sidebar,
+  .topbar,
+  .quotation-preview-toolbar,
+  .no-print,
+  .sidebar-overlay {
+    display: none !important;
+  }
+
+  .shell,
+  .main,
+  .content,
+  .quotation-preview-overlay,
+  .quotation-preview-shell {
+    position: static !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* La cotización sale del flujo normal y ocupa exactamente una hoja */
+  .quotation-document {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 999999 !important;
+
+    display: block !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    min-width: 210mm !important;
+    min-height: 297mm !important;
+    max-width: 210mm !important;
+    max-height: 297mm !important;
+
+    margin: 0 !important;
+    padding: 0 0 7mm !important;
+    overflow: hidden !important;
+
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    zoom: 1 !important;
+
+    color: #15253b !important;
+    background: #ffffff !important;
+  }
+
+  .quotation-document,
+  .quotation-document * {
+    visibility: visible !important;
+  }
+
+  /* Encabezado */
+  .quotation-document .quotation-document-header {
+    display: grid !important;
+    grid-template-columns: 46% 54% !important;
+    gap: 7mm !important;
+    padding: 9mm 12mm !important;
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #062a56, #07579b) !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .quotation-document .quotation-brand-block img {
+    display: block !important;
+    width: 25mm !important;
+    height: 18mm !important;
+    min-width: 25mm !important;
+    min-height: 18mm !important;
+    max-width: 25mm !important;
+    max-height: 18mm !important;
+    margin: 0 !important;
+    padding: 1.5mm !important;
+    object-fit: contain !important;
+    border-radius: 2.5mm !important;
+    background: #ffffff !important;
+  }
+
+  .quotation-document .quotation-brand-block h2 {
+    margin: 2.5mm 0 5mm !important;
+    font-size: 18pt !important;
+    line-height: 1.05 !important;
+  }
+
+  .quotation-document .quotation-brand-block b {
+    font-size: 9pt !important;
+  }
+
+  .quotation-document .quotation-brand-block span {
+    margin-top: 2mm !important;
+    font-size: 8pt !important;
+  }
+
+  .quotation-document .quotation-document-info {
+    padding-left: 6mm !important;
+  }
+
+  .quotation-document .quotation-document-info h1 {
+    margin: 0 0 5mm !important;
+    font-size: 20pt !important;
+    line-height: 1.05 !important;
+  }
+
+  .quotation-document .quotation-document-info > div {
+    grid-template-columns: 30mm 1fr !important;
+    gap: 2mm !important;
+    margin-top: 2mm !important;
+    font-size: 8.5pt !important;
+  }
+
+  /* Descripción */
+  .quotation-document .quotation-description {
+    margin: 6mm 12mm 4mm !important;
+    padding-top: 4mm !important;
+  }
+
+  .quotation-document .quotation-description h3 {
+    margin: 0 0 3mm !important;
+    font-size: 11pt !important;
+  }
+
+  .quotation-document .quotation-description p {
+    margin: 0 !important;
+    font-size: 9pt !important;
+    line-height: 1.45 !important;
+  }
+
+  /* Tabla */
+  .quotation-document .quotation-document-table {
+    width: calc(100% - 24mm) !important;
+    margin: 0 12mm !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+  }
+
+  .quotation-document .quotation-document-table th,
+  .quotation-document .quotation-document-table td {
+    padding: 2.2mm !important;
+    font-size: 8pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .quotation-document .quotation-document-table th:nth-child(1) {
+    width: 52% !important;
+  }
+
+  .quotation-document .quotation-document-table th:nth-child(2) {
+    width: 14% !important;
+  }
+
+  .quotation-document .quotation-document-table th:nth-child(3),
+  .quotation-document .quotation-document-table th:nth-child(4) {
+    width: 17% !important;
+  }
+
+  .quotation-document .quotation-document-table tr,
+  .quotation-document .quotation-document-table td {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Totales */
+  .quotation-document .quotation-document-bottom {
+    display: grid !important;
+    grid-template-columns: 1fr 72mm !important;
+    gap: 6mm !important;
+    margin: 4mm 12mm 0 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .quotation-document .quotation-validity {
+    padding-top: 2mm !important;
+    font-size: 8.5pt !important;
+  }
+
+  .quotation-document .quotation-document-totals > div {
+    padding: 2.2mm 3mm !important;
+    font-size: 8.5pt !important;
+  }
+
+  /* Nota */
+  .quotation-document .quotation-document-note {
+    margin: 4mm 12mm !important;
+    padding: 2.5mm 3mm !important;
+    font-size: 8pt !important;
+    line-height: 1.35 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Firmas */
+  .quotation-document .quotation-signatures {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 24mm !important;
+    margin: 14mm 18mm 0 !important;
+    font-size: 8.5pt !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .quotation-document footer {
+    margin-top: 9mm !important;
+    font-size: 8.5pt !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
