@@ -3969,3 +3969,403 @@ td small {
     break-inside: avoid !important;
   }
 }
+/* =========================================================
+   CORRECCIÓN DEFINITIVA: VISTA PREVIA + IMPRESIÓN COTIZACIÓN
+   PEGAR AL FINAL DE app/globals.css
+========================================================= */
+
+/* Modal de vista previa */
+.quotation-preview-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: 24px !important;
+  overflow: auto !important;
+  background: rgba(4, 12, 24, 0.82) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.quotation-preview-shell {
+  width: min(920px, 100%) !important;
+  max-width: 920px !important;
+  margin: 0 auto !important;
+}
+
+.quotation-preview-toolbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  padding: 12px !important;
+  margin-bottom: 12px !important;
+  border-radius: 14px !important;
+  background: rgba(8, 20, 35, 0.96) !important;
+}
+
+/* Documento visible en pantalla */
+.quotation-document {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 920px !important;
+  min-height: 1180px !important;
+  margin: 0 auto !important;
+  padding: 0 0 42px !important;
+  overflow: hidden !important;
+  color: #15253b !important;
+  background: #ffffff !important;
+  border-radius: 2px !important;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.32) !important;
+}
+
+/* Evita que el logo ocupe toda la pantalla */
+.quotation-document .quotation-brand-block img {
+  display: block !important;
+  width: 112px !important;
+  height: 76px !important;
+  min-width: 112px !important;
+  min-height: 76px !important;
+  max-width: 112px !important;
+  max-height: 76px !important;
+  margin: 0 !important;
+  padding: 7px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  border-radius: 13px !important;
+  background: #ffffff !important;
+  transform: none !important;
+}
+
+/* Encabezado de la plantilla */
+.quotation-document .quotation-document-header {
+  display: grid !important;
+  grid-template-columns: 46% 54% !important;
+  gap: 34px !important;
+  padding: 42px 54px !important;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #062a56 0%, #07579b 100%) !important;
+}
+
+.quotation-document .quotation-brand-block {
+  min-width: 0 !important;
+}
+
+.quotation-document .quotation-brand-block h2 {
+  margin: 12px 0 24px !important;
+  color: #ffffff !important;
+  font-size: 30px !important;
+  line-height: 1.1 !important;
+}
+
+.quotation-document .quotation-brand-block b,
+.quotation-document .quotation-brand-block span {
+  display: block !important;
+  color: #ffffff !important;
+}
+
+.quotation-document .quotation-brand-block span {
+  margin-top: 8px !important;
+  opacity: 0.9 !important;
+}
+
+.quotation-document .quotation-document-info {
+  min-width: 0 !important;
+  padding-left: 32px !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.65) !important;
+}
+
+.quotation-document .quotation-document-info h1 {
+  margin: 0 0 28px !important;
+  color: #ffffff !important;
+  font-size: 34px !important;
+  line-height: 1.1 !important;
+}
+
+.quotation-document .quotation-document-info > div {
+  display: grid !important;
+  grid-template-columns: 120px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  margin-top: 11px !important;
+  color: #ffffff !important;
+}
+
+.quotation-document .quotation-document-info b,
+.quotation-document .quotation-document-info span {
+  color: #ffffff !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* Cuerpo */
+.quotation-document .quotation-description {
+  margin: 32px 54px 24px !important;
+  padding-top: 22px !important;
+  border-top: 3px solid #07579b !important;
+}
+
+.quotation-document .quotation-description h3 {
+  color: #07579b !important;
+}
+
+.quotation-document .quotation-document-table {
+  width: calc(100% - 108px) !important;
+  min-width: 0 !important;
+  margin: 0 54px !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+}
+
+.quotation-document .quotation-document-table th,
+.quotation-document .quotation-document-table td {
+  padding: 13px !important;
+  border: 1px solid #7c8792 !important;
+  color: #15253b !important;
+  vertical-align: top !important;
+}
+
+.quotation-document .quotation-document-table th {
+  color: #ffffff !important;
+  background: #07579b !important;
+}
+
+.quotation-document .quotation-document-table th:nth-child(1) {
+  width: 52% !important;
+}
+
+.quotation-document .quotation-document-table th:nth-child(2) {
+  width: 14% !important;
+}
+
+.quotation-document .quotation-document-table th:nth-child(3),
+.quotation-document .quotation-document-table th:nth-child(4) {
+  width: 17% !important;
+}
+
+.quotation-document .quotation-document-table td small {
+  display: block !important;
+  margin-top: 5px !important;
+  color: #657386 !important;
+}
+
+.quotation-document .quotation-document-bottom {
+  display: grid !important;
+  grid-template-columns: 1fr 340px !important;
+  gap: 30px !important;
+  align-items: start !important;
+  margin: 24px 54px 0 !important;
+}
+
+.quotation-document .quotation-document-totals {
+  border: 1px solid #687582 !important;
+}
+
+.quotation-document .quotation-document-totals > div {
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 12px 15px !important;
+  border-bottom: 1px solid #687582 !important;
+  color: #15253b !important;
+}
+
+.quotation-document .quotation-total-highlight {
+  color: #ffffff !important;
+  background: #07579b !important;
+}
+
+.quotation-document .quotation-total-highlight span,
+.quotation-document .quotation-total-highlight b {
+  color: #ffffff !important;
+}
+
+.quotation-document .quotation-document-note {
+  margin: 22px 54px !important;
+  padding: 13px 15px !important;
+  border-left: 4px solid #07579b !important;
+  color: #334458 !important;
+  background: #edf5fc !important;
+}
+
+.quotation-document .quotation-signatures {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 100px !important;
+  margin: 90px 80px 0 !important;
+  text-align: center !important;
+}
+
+.quotation-document .quotation-signatures span {
+  display: block !important;
+  border-top: 1px solid #222 !important;
+}
+
+.quotation-document footer {
+  margin-top: 58px !important;
+  color: #07579b !important;
+  text-align: center !important;
+}
+
+/* IMPRESIÓN */
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    width: 210mm !important;
+    min-width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body > * {
+    display: none !important;
+  }
+
+  body:has(.quotation-document) > * {
+    display: block !important;
+  }
+
+  .shell,
+  .main,
+  .content,
+  .quotation-preview-overlay,
+  .quotation-preview-shell {
+    position: static !important;
+    display: block !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .sidebar,
+  .topbar,
+  .quotation-preview-toolbar,
+  .no-print {
+    display: none !important;
+  }
+
+  .quotation-document {
+    position: static !important;
+    display: block !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 0 10mm !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .quotation-document .quotation-document-header {
+    grid-template-columns: 46% 54% !important;
+    gap: 8mm !important;
+    padding: 10mm 13mm !important;
+  }
+
+  .quotation-document .quotation-brand-block img {
+    width: 28mm !important;
+    height: 20mm !important;
+    min-width: 28mm !important;
+    min-height: 20mm !important;
+    max-width: 28mm !important;
+    max-height: 20mm !important;
+    padding: 2mm !important;
+  }
+
+  .quotation-document .quotation-brand-block h2 {
+    margin: 3mm 0 6mm !important;
+    font-size: 20pt !important;
+  }
+
+  .quotation-document .quotation-document-info {
+    padding-left: 7mm !important;
+  }
+
+  .quotation-document .quotation-document-info h1 {
+    margin-bottom: 6mm !important;
+    font-size: 22pt !important;
+  }
+
+  .quotation-document .quotation-description {
+    margin: 7mm 13mm 5mm !important;
+    padding-top: 5mm !important;
+  }
+
+  .quotation-document .quotation-document-table {
+    width: calc(100% - 26mm) !important;
+    margin: 0 13mm !important;
+  }
+
+  .quotation-document .quotation-document-table th,
+  .quotation-document .quotation-document-table td {
+    padding: 2.7mm !important;
+    font-size: 9pt !important;
+  }
+
+  .quotation-document .quotation-document-bottom {
+    grid-template-columns: 1fr 76mm !important;
+    gap: 7mm !important;
+    margin: 5mm 13mm 0 !important;
+  }
+
+  .quotation-document .quotation-document-note {
+    margin: 5mm 13mm !important;
+  }
+
+  .quotation-document .quotation-signatures {
+    gap: 25mm !important;
+    margin: 18mm 18mm 0 !important;
+  }
+
+  .quotation-document footer {
+    margin-top: 13mm !important;
+  }
+
+  .quotation-document-header,
+  .quotation-document-table tr,
+  .quotation-document-bottom,
+  .quotation-document-note,
+  .quotation-signatures,
+  .quotation-document footer {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .quotation-document .quotation-document-header {
+    grid-template-columns: 1fr !important;
+  }
+
+  .quotation-document .quotation-document-info {
+    padding-left: 0 !important;
+    border-left: 0 !important;
+  }
+
+  .quotation-document .quotation-document-bottom,
+  .quotation-document .quotation-signatures {
+    grid-template-columns: 1fr !important;
+  }
+}
