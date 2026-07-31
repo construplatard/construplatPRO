@@ -1,28 +1,53 @@
 export function printQuotationDocument() {
-  const documentElement = document.getElementById('quotation-print-area');
+  const source = document.getElementById('quotation-print-area');
 
-  if (!documentElement) {
-    window.alert('No se encontró la plantilla de la cotización.');
+  if (!source) {
+    window.alert('Primero abre la vista previa de la cotización.');
     return;
   }
 
-  const printWindow = window.open(
-    '',
-    '_blank',
-    'width=1000,height=900,noopener,noreferrer'
+  const oldFrame = document.getElementById(
+    'quotation-print-frame'
+  ) as HTMLIFrameElement | null;
+
+  oldFrame?.remove();
+
+  const frame = document.createElement('iframe');
+
+  frame.id = 'quotation-print-frame';
+  frame.setAttribute('title', 'Impresión de cotización');
+
+  Object.assign(frame.style, {
+    position: 'fixed',
+    right: '0',
+    bottom: '0',
+    width: '0',
+    height: '0',
+    border: '0',
+    visibility: 'hidden',
+  });
+
+  document.body.appendChild(frame);
+
+  const frameWindow = frame.contentWindow;
+  const frameDocument = frame.contentDocument;
+
+  if (!frameWindow || !frameDocument) {
+    frame.remove();
+    window.alert('No se pudo preparar la impresión.');
+    return;
+  }
+
+  const logo = source.querySelector('img');
+  const absoluteLogoSrc = logo?.src || '';
+
+  const clonedHtml = source.outerHTML.replace(
+    /src="\/logo-construplata\.jpg"/g,
+    `src="${absoluteLogoSrc}"`
   );
 
-  if (!printWindow) {
-    window.alert(
-      'El navegador bloqueó la ventana de impresión. Permite ventanas emergentes para este sitio.'
-    );
-    return;
-  }
-
-  const html = documentElement.outerHTML;
-
-  printWindow.document.open();
-  printWindow.document.write(`
+  frameDocument.open();
+  frameDocument.write(`
     <!doctype html>
     <html lang="es">
       <head>
@@ -31,6 +56,7 @@ export function printQuotationDocument() {
           name="viewport"
           content="width=device-width, initial-scale=1"
         />
+
         <title>Cotización CONSTRUPLATA</title>
 
         <style>
@@ -57,12 +83,19 @@ export function printQuotationDocument() {
             print-color-adjust: exact;
           }
 
+          body {
+            display: block;
+          }
+
           .quotation-document {
             width: 210mm;
             height: 297mm;
+            min-width: 210mm;
             min-height: 297mm;
+            max-width: 210mm;
+            max-height: 297mm;
             margin: 0;
-            padding: 0 0 7mm;
+            padding: 0 0 6mm;
             overflow: hidden;
             color: #15253b;
             background: #ffffff;
@@ -74,16 +107,29 @@ export function printQuotationDocument() {
             gap: 7mm;
             padding: 9mm 12mm;
             color: #ffffff;
-            background: linear-gradient(135deg, #062a56, #07579b);
+            background: linear-gradient(
+              135deg,
+              #062a56 0%,
+              #07579b 100%
+            );
+          }
+
+          .quotation-brand-block {
+            min-width: 0;
           }
 
           .quotation-brand-block img {
             display: block;
             width: 25mm;
             height: 18mm;
+            min-width: 25mm;
+            min-height: 18mm;
+            max-width: 25mm;
+            max-height: 18mm;
             margin: 0;
             padding: 1.5mm;
             object-fit: contain;
+            object-position: center;
             border-radius: 2.5mm;
             background: #ffffff;
           }
@@ -111,8 +157,9 @@ export function printQuotationDocument() {
           }
 
           .quotation-document-info {
+            min-width: 0;
             padding-left: 6mm;
-            border-left: 0.3mm solid rgba(255,255,255,.7);
+            border-left: 0.3mm solid rgba(255, 255, 255, 0.72);
           }
 
           .quotation-document-info h1 {
@@ -124,7 +171,7 @@ export function printQuotationDocument() {
 
           .quotation-document-info > div {
             display: grid;
-            grid-template-columns: 30mm 1fr;
+            grid-template-columns: 30mm minmax(0, 1fr);
             gap: 2mm;
             margin-top: 2mm;
             color: #ffffff;
@@ -134,6 +181,7 @@ export function printQuotationDocument() {
           .quotation-document-info b,
           .quotation-document-info span {
             color: #ffffff;
+            overflow-wrap: anywhere;
           }
 
           .quotation-description {
@@ -192,6 +240,12 @@ export function printQuotationDocument() {
             display: block;
             margin-top: 1.2mm;
             color: #657386;
+          }
+
+          .quotation-document-table tr,
+          .quotation-document-table td {
+            break-inside: avoid;
+            page-break-inside: avoid;
           }
 
           .quotation-document-bottom {
@@ -265,37 +319,72 @@ export function printQuotationDocument() {
             font-size: 8.5pt;
           }
 
+          .quotation-document-header,
+          .quotation-document-bottom,
+          .quotation-document-note,
+          .quotation-signatures,
+          .quotation-document footer {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+
           @media print {
             html,
             body,
             .quotation-document {
-              width: 210mm;
-              height: 297mm;
-              margin: 0;
-              padding-left: 0;
-              padding-right: 0;
-              overflow: hidden;
+              width: 210mm !important;
+              height: 297mm !important;
+              margin: 0 !important;
+              padding-left: 0 !important;
+              padding-right: 0 !important;
+              overflow: hidden !important;
             }
           }
         </style>
       </head>
 
       <body>
-        ${html}
-
-        <script>
-          window.addEventListener('load', function () {
-            setTimeout(function () {
-              window.print();
-            }, 350);
-          });
-
-          window.addEventListener('afterprint', function () {
-            window.close();
-          });
-        </script>
+        ${clonedHtml}
       </body>
     </html>
   `);
-  printWindow.document.close();
+  frameDocument.close();
+
+  const runPrint = () => {
+    window.setTimeout(() => {
+      try {
+        frameWindow.focus();
+        frameWindow.print();
+      } finally {
+        window.setTimeout(() => frame.remove(), 1500);
+      }
+    }, 250);
+  };
+
+  const images = Array.from(frameDocument.images);
+
+  if (!images.length) {
+    runPrint();
+    return;
+  }
+
+  let pending = images.length;
+
+  const finishImage = () => {
+    pending -= 1;
+
+    if (pending <= 0) {
+      runPrint();
+    }
+  };
+
+  images.forEach((image) => {
+    if (image.complete) {
+      finishImage();
+      return;
+    }
+
+    image.addEventListener('load', finishImage, { once: true });
+    image.addEventListener('error', finishImage, { once: true });
+  });
 }
