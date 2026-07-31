@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import PageFrame from '@/components/PageFrame';
-import { printQuotationDocument } from '@/lib/printQuotation';
 import { useData } from '@/components/DataProvider';
 import { money, uid } from '@/lib/store';
+import { printQuotationDocument } from '@/lib/printQuotation';
 import {
   Plus,
   Trash2,
@@ -99,8 +99,8 @@ function Cotizaciones() {
   }, [cotizaciones]);
 
   const subtotal = form.partidas.reduce(
-    (total, partida) =>
-      total + Number(partida.cantidad || 0) * Number(partida.precio || 0),
+    (sum, partida) =>
+      sum + Number(partida.cantidad || 0) * Number(partida.precio || 0),
     0
   );
 
@@ -127,6 +127,7 @@ function Cotizaciones() {
 
   const openEdit = (cotizacion: CotizacionExtendida) => {
     setEditingId(cotizacion.id);
+
     setForm({
       clienteId: cotizacion.clienteId || '',
       proyecto: cotizacion.proyecto || '',
@@ -189,17 +190,17 @@ function Cotizaciones() {
 
   const saveCotizacion = () => {
     if (!form.clienteId) {
-      alert('Selecciona un cliente.');
+      window.alert('Selecciona un cliente.');
       return;
     }
 
     if (!form.proyecto.trim()) {
-      alert('Escribe el nombre del trabajo o proyecto.');
+      window.alert('Escribe el nombre del trabajo o proyecto.');
       return;
     }
 
     if (!form.partidas.some((partida) => partida.descripcion.trim())) {
-      alert('Agrega al menos una partida.');
+      window.alert('Agrega al menos una partida.');
       return;
     }
 
@@ -207,21 +208,17 @@ function Cotizaciones() {
       const currentCotizaciones =
         current.cotizaciones as CotizacionExtendida[];
 
+      const previous = editingId
+        ? currentCotizaciones.find((item) => item.id === editingId)
+        : null;
+
       const saved: CotizacionExtendida = {
         id: editingId || uid('cot'),
-        numero:
-          editingId
-            ? currentCotizaciones.find((item) => item.id === editingId)
-                ?.numero || nextNumber
-            : nextNumber,
+        numero: previous?.numero || nextNumber,
         clienteId: form.clienteId,
         proyecto: form.proyecto.trim(),
         monto: total,
-        estado:
-          editingId
-            ? currentCotizaciones.find((item) => item.id === editingId)
-                ?.estado || 'Borrador'
-            : 'Borrador',
+        estado: previous?.estado || 'Borrador',
         descripcion: form.descripcion.trim(),
         fecha: form.fecha,
         vendedor: form.vendedor.trim() || vendedorPredeterminado,
@@ -275,22 +272,27 @@ function Cotizaciones() {
     }));
   };
 
-  const preview = cotizaciones.find((item) => item.id === previewId) || null;
+  const preview =
+    cotizaciones.find((item) => item.id === previewId) || null;
 
   return (
     <>
-     <div
-  style={{
-    display: 'flex',
-    justifyContent: 'flex-end',
-    marginBottom: '24px',
-  }}
->
-  <button type="button" className="primary" onClick={openNew}>
-    <Plus size={18} />
-    Nueva cotización
-  </button>
-</div>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginBottom: '24px',
+        }}
+      >
+        <button
+          type="button"
+          className="primary"
+          onClick={openNew}
+        >
+          <Plus size={18} />
+          Nueva cotización
+        </button>
+      </div>
 
       <section className="stats">
         <article className="stat">
@@ -323,7 +325,8 @@ function Cotizaciones() {
           <b>
             {money(
               cotizaciones.reduce(
-                (sum, item) => sum + Number(item.total ?? item.monto ?? 0),
+                (sum, item) =>
+                  sum + Number(item.total ?? item.monto ?? 0),
                 0
               )
             )}
@@ -336,12 +339,18 @@ function Cotizaciones() {
           <div className="quotation-builder-head">
             <div>
               <span className="eyebrow">
-                {editingId ? 'Editar cotización' : 'Nueva cotización'}
+                {editingId
+                  ? 'Editar cotización'
+                  : 'Nueva cotización'}
               </span>
+
               <h3>
                 {editingId
                   ? 'Actualizar cotización'
-                  : `Crear ${nextNumber.replace('COT-', 'Cotización #')}`}
+                  : `Crear ${nextNumber.replace(
+                      'COT-',
+                      'Cotización #'
+                    )}`}
               </h3>
             </div>
 
@@ -370,8 +379,12 @@ function Cotizaciones() {
                 }
               >
                 <option value="">Seleccionar cliente</option>
+
                 {data.clientes.map((cliente) => (
-                  <option key={cliente.id} value={cliente.id}>
+                  <option
+                    key={cliente.id}
+                    value={cliente.id}
+                  >
                     {cliente.nombre}
                   </option>
                 ))}
@@ -452,8 +465,13 @@ function Cotizaciones() {
             </div>
 
             {form.partidas.map((partida, index) => (
-              <div className="quotation-item-row" key={partida.id}>
-                <div className="quotation-item-number">{index + 1}</div>
+              <div
+                className="quotation-item-row"
+                key={partida.id}
+              >
+                <div className="quotation-item-number">
+                  {index + 1}
+                </div>
 
                 <label>
                   Descripción
@@ -547,7 +565,9 @@ function Cotizaciones() {
                 <button
                   type="button"
                   className="cliente-action-btn delete"
-                  onClick={() => removePartida(partida.id)}
+                  onClick={() =>
+                    removePartida(partida.id)
+                  }
                   title="Eliminar partida"
                 >
                   <Trash2 size={16} />
@@ -564,15 +584,19 @@ function Cotizaciones() {
                 onChange={(event) =>
                   setForm({
                     ...form,
-                    requiereComprobante: event.target.checked,
+                    requiereComprobante:
+                      event.target.checked,
                   })
                 }
               />
 
               <span>
-                <b>El cliente requiere comprobante fiscal</b>
+                <b>
+                  El cliente requiere comprobante fiscal
+                </b>
                 <small>
-                  Al activarlo, se adiciona el 18% de ITBIS.
+                  Al activarlo, se adiciona el 18% de
+                  ITBIS.
                 </small>
               </span>
             </label>
@@ -598,8 +622,9 @@ function Cotizaciones() {
           </div>
 
           <div className="quotation-note">
-            <b>Nota:</b> En caso de que el cliente requiera comprobante
-            fiscal, se adicionará el 18% correspondiente al ITBIS sobre el
+            <b>Nota:</b> En caso de que el cliente
+            requiera comprobante fiscal, se adicionará
+            el 18% correspondiente al ITBIS sobre el
             subtotal de esta cotización.
           </div>
 
@@ -620,7 +645,9 @@ function Cotizaciones() {
               className="primary"
               onClick={saveCotizacion}
             >
-              {editingId ? 'Guardar cambios' : 'Guardar cotización'}
+              {editingId
+                ? 'Guardar cambios'
+                : 'Guardar cotización'}
             </button>
           </div>
         </section>
@@ -644,23 +671,38 @@ function Cotizaciones() {
             {cotizaciones.length ? (
               cotizaciones.map((cotizacion) => {
                 const cliente = data.clientes.find(
-                  (item) => item.id === cotizacion.clienteId
+                  (item) =>
+                    item.id === cotizacion.clienteId
                 );
 
                 return (
                   <tr key={cotizacion.id}>
                     <td>
                       <b>
-                        {cotizacion.numero.replace('COT-', '#')}
+                        {cotizacion.numero.replace(
+                          'COT-',
+                          '#'
+                        )}
                       </b>
                     </td>
 
-                    <td>{cliente?.nombre || 'Sin cliente'}</td>
+                    <td>
+                      {cliente?.nombre || 'Sin cliente'}
+                    </td>
+
                     <td>{cotizacion.proyecto}</td>
-                    <td>{formatDate(cotizacion.fecha || '')}</td>
+
+                    <td>
+                      {formatDate(cotizacion.fecha || '')}
+                    </td>
+
                     <td>
                       {money(
-                        Number(cotizacion.total ?? cotizacion.monto ?? 0)
+                        Number(
+                          cotizacion.total ??
+                            cotizacion.monto ??
+                            0
+                        )
                       )}
                     </td>
 
@@ -675,13 +717,22 @@ function Cotizaciones() {
                           )
                         }
                       >
-                        <option value="Borrador">Borrador</option>
-                        <option value="Enviada">Enviada</option>
-                        <option value="Aprobada">Aprobada</option>
-                        <option value="Rechazada">Rechazada</option>
+                        <option value="Borrador">
+                          Borrador
+                        </option>
+                        <option value="Enviada">
+                          Enviada
+                        </option>
+                        <option value="Aprobada">
+                          Aprobada
+                        </option>
+                        <option value="Rechazada">
+                          Rechazada
+                        </option>
                       </select>
 
-                      {cotizacion.estado === 'Aprobada' && (
+                      {cotizacion.estado ===
+                        'Aprobada' && (
                         <small className="approved-contract-note">
                           Disponible en Contratos
                         </small>
@@ -694,7 +745,9 @@ function Cotizaciones() {
                           type="button"
                           className="cliente-action-btn edit"
                           title="Vista previa"
-                          onClick={() => setPreviewId(cotizacion.id)}
+                          onClick={() =>
+                            setPreviewId(cotizacion.id)
+                          }
                         >
                           <Eye size={16} />
                         </button>
@@ -702,50 +755,33 @@ function Cotizaciones() {
                         <button
                           type="button"
                           className="cliente-action-btn edit"
-                          title="Editar"
-                          onClick={() => openEdit(cotizacion)}
+                          title="Editar cotización"
+                          onClick={() =>
+                            openEdit(cotizacion)
+                          }
                         >
                           <Pencil size={16} />
                         </button>
-<button
-  type="button"
-  className="cliente-action-btn edit"
-  title="Editar"
-  onClick={() => openEdit(cotizacion)}
->
-  <Pencil size={16} />
-</button>
 
-<button
-  type="button"
-  className="cliente-action-btn edit"
-  title="Imprimir"
-  onClick={() => {
-    setPreviewId(cotizacion.id);
+                        <button
+                          type="button"
+                          className="cliente-action-btn edit"
+                          title="Abrir para imprimir"
+                          onClick={() =>
+                            setPreviewId(cotizacion.id)
+                          }
+                        >
+                          <Printer size={16} />
+                        </button>
 
-    window.setTimeout(() => {
-      printQuotationDocument();
-    }, 300);
-  }}
->
-  <Printer size={16} />
-</button>
-
-<button
-  type="button"
-  className="cliente-action-btn delete"
-  title="Eliminar"
-  onClick={() => deleteCotizacion(cotizacion.id)}
->
-  <Trash2 size={16} />
-</button>
-                       
                         <button
                           type="button"
                           className="cliente-action-btn delete"
-                          title="Eliminar"
+                          title="Eliminar cotización"
                           onClick={() =>
-                            deleteCotizacion(cotizacion.id)
+                            deleteCotizacion(
+                              cotizacion.id
+                            )
                           }
                         >
                           <Trash2 size={16} />
@@ -775,7 +811,9 @@ function Cotizaciones() {
         >
           <div
             className="quotation-preview-shell"
-            onClick={(event) => event.stopPropagation()}
+            onClick={(event) =>
+              event.stopPropagation()
+            }
           >
             <div className="quotation-preview-toolbar no-print">
               <button
@@ -789,7 +827,7 @@ function Cotizaciones() {
               <button
                 type="button"
                 className="primary"
-             onClick={printQuotationDocument}
+                onClick={printQuotationDocument}
               >
                 <Printer size={17} />
                 Imprimir / PDF
@@ -800,7 +838,8 @@ function Cotizaciones() {
               cotizacion={preview}
               cliente={
                 data.clientes.find(
-                  (item) => item.id === preview.clienteId
+                  (item) =>
+                    item.id === preview.clienteId
                 ) || null
               }
             />
@@ -837,16 +876,22 @@ function QuotationTemplate({
   );
 
   return (
-   <article
-  id="quotation-print-area"
-  className="quotation-document"
->
+    <article
+      id="quotation-print-area"
+      className="quotation-document"
+    >
       <header className="quotation-document-header">
         <div className="quotation-brand-block">
-          <img src="/logo-construplata.jpg" alt="CONSTRUPLATA" />
+          <img
+            src="/logo-construplata.jpg"
+            alt="CONSTRUPLATA"
+          />
+
           <h2>CONSTRUPLATA</h2>
           <b>CONSTRUPLATA SRL</b>
-          <span>Santo Domingo, República Dominicana</span>
+          <span>
+            Santo Domingo, República Dominicana
+          </span>
         </div>
 
         <div className="quotation-document-info">
@@ -857,19 +902,24 @@ function QuotationTemplate({
 
           <div>
             <b>FECHA:</b>
-            <span>{formatDate(cotizacion.fecha || '')}</span>
+            <span>
+              {formatDate(cotizacion.fecha || '')}
+            </span>
           </div>
 
           <div>
             <b>VENDEDOR:</b>
             <span>
-              {cotizacion.vendedor || vendedorPredeterminado}
+              {cotizacion.vendedor ||
+                vendedorPredeterminado}
             </span>
           </div>
 
           <div>
             <b>CLIENTE:</b>
-            <span>{cliente?.nombre || 'Sin cliente'}</span>
+            <span>
+              {cliente?.nombre || 'Sin cliente'}
+            </span>
           </div>
         </div>
       </header>
@@ -894,28 +944,36 @@ function QuotationTemplate({
         </thead>
 
         <tbody>
-          {(cotizacion.partidas || []).map((partida, index) => (
-            <tr key={partida.id}>
-              <td>
-                <b>
-                  {index + 1}. {partida.descripcion}
-                </b>
-                {partida.detalle && <small>{partida.detalle}</small>}
-              </td>
+          {(cotizacion.partidas || []).map(
+            (partida, index) => (
+              <tr key={partida.id}>
+                <td>
+                  <b>
+                    {index + 1}. {partida.descripcion}
+                  </b>
 
-              <td>
-                {partida.cantidad} {partida.unidad}
-              </td>
+                  {partida.detalle && (
+                    <small>{partida.detalle}</small>
+                  )}
+                </td>
 
-              <td>{money(partida.precio)}</td>
+                <td>
+                  {partida.cantidad} {partida.unidad}
+                </td>
 
-              <td>
-                <b>
-                  {money(partida.cantidad * partida.precio)}
-                </b>
-              </td>
-            </tr>
-          ))}
+                <td>{money(partida.precio)}</td>
+
+                <td>
+                  <b>
+                    {money(
+                      partida.cantidad *
+                        partida.precio
+                    )}
+                  </b>
+                </td>
+              </tr>
+            )
+          )}
         </tbody>
       </table>
 
@@ -945,8 +1003,9 @@ function QuotationTemplate({
       </div>
 
       <p className="quotation-document-note">
-        <b>Nota:</b> En caso de que el cliente requiera comprobante
-        fiscal, se adicionará el 18% correspondiente al ITBIS sobre el
+        <b>Nota:</b> En caso de que el cliente
+        requiera comprobante fiscal, se adicionará
+        el 18% correspondiente al ITBIS sobre el
         subtotal de esta cotización.
       </p>
 
@@ -963,7 +1022,8 @@ function QuotationTemplate({
       </div>
 
       <footer>
-        Gracias por confiar en <b>CONSTRUPLATA SRL</b>
+        Gracias por confiar en{' '}
+        <b>CONSTRUPLATA SRL</b>
       </footer>
     </article>
   );
