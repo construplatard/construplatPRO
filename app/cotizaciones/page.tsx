@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import PageFrame from '@/components/PageFrame';
 import { useData } from '@/components/DataProvider';
 import { money, uid } from '@/lib/store';
+import { printQuotationDocument } from '@/lib/printQuotation';
 import {
   Plus,
   Trash2,
@@ -74,7 +75,6 @@ function Cotizaciones() {
 
   const [showForm, setShowForm] = useState(false);
   const [previewId, setPreviewId] = useState<string | null>(null);
-  const [autoPrint, setAutoPrint] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
@@ -110,17 +110,6 @@ function Cotizaciones() {
 
   const preview =
     cotizaciones.find((item) => item.id === previewId) || null;
-
-  useEffect(() => {
-    if (!preview || !autoPrint) return;
-
-    const timer = window.setTimeout(() => {
-      window.print();
-      setAutoPrint(false);
-    }, 400);
-
-    return () => window.clearTimeout(timer);
-  }, [preview, autoPrint]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -288,17 +277,10 @@ function Cotizaciones() {
   };
 
   const openPreview = (id: string) => {
-    setAutoPrint(false);
-    setPreviewId(id);
-  };
-
-  const openPrint = (id: string) => {
-    setAutoPrint(true);
     setPreviewId(id);
   };
 
   const closePreview = () => {
-    setAutoPrint(false);
     setPreviewId(null);
   };
 
@@ -793,9 +775,9 @@ function Cotizaciones() {
                         <button
                           type="button"
                           className="cliente-action-btn edit"
-                          title="Imprimir cotización"
+                          title="Preparar impresión"
                           onClick={() =>
-                            openPrint(cotizacion.id)
+                            openPreview(cotizacion.id)
                           }
                         >
                           <Printer size={16} />
@@ -854,7 +836,7 @@ function Cotizaciones() {
               <button
                 type="button"
                 className="primary"
-                onClick={() => window.print()}
+                onClick={printQuotationDocument}
               >
                 <Printer size={17} />
                 Imprimir / PDF
