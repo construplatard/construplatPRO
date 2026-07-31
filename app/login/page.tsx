@@ -27,10 +27,8 @@ const frases = [
 export default function Login() {
   const router = useRouter();
 
-  const [email, setEmail] = useState(
-    'admin@construplata.com'
-  );
-
+  const [email, setEmail] = useState('');
+  
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
   const [error, setError] = useState('');
@@ -166,13 +164,14 @@ export default function Login() {
           <label>
             Correo electrónico
 
-            <input
-              type="email"
-              value={email}
-              onChange={(e) =>
-                setEmail(e.target.value)
-              }
-            />
+           <input
+  type="email"
+  value={email}
+  onChange={(e) =>
+    setEmail(e.target.value)
+  }
+  placeholder="Ingrese su correo electrónico"
+/>
           </label>
 
           <label>
