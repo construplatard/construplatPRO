@@ -1,2 +1,2 @@
-import ERPApp from '@/components/ERPApp';
-export default function Page(){return <ERPApp/>}
+import {redirect} from 'next/navigation';
+export default function Home(){redirect('/login')}
