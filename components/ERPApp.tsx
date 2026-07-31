@@ -2,7 +2,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import {AppData,Bitacora,Cliente,Contratista,Cotizacion,Factura,Movimiento,Proyecto} from '@/lib/types';
 import {loadData,saveData,seedData} from '@/lib/store';
-import {Building2,Users,FileText,FolderKanban,NotebookPen,WalletCards,ReceiptText,CircleDollarSign,HardHat,Landmark,BarChart3,Settings,Menu,X,Plus,Search,Printer,Trash2,ChevronRight,TrendingUp,Clock,CheckCircle2} from 'lucide-react';
+import {Building2,Users,FileText,FolderKanban,NotebookPen,WalletCards,ReceiptText,CircleDollarSign,HardHat,Landmark,BarChart3,Settings,Menu,X,Plus,Search,Printer,Trash2,ChevronRight,TrendingUp,Clock,CheckCircle2,LogOut,Moon,Sun,ShieldCheck,ArrowRight} from 'lucide-react';
 
 type Section='dashboard'|'clientes'|'cotizaciones'|'proyectos'|'bitacoras'|'cobros'|'facturas'|'gastos'|'contratistas'|'caja'|'reportes'|'config';
 const money=(n:number)=>new Intl.NumberFormat('es-DO',{style:'currency',currency:'DOP',maximumFractionDigits:2}).format(n);
@@ -11,13 +11,17 @@ const today=()=>new Date().toISOString().slice(0,10);
 
 export default function ERPApp(){
  const [data,setData]=useState<AppData>(seedData); const [ready,setReady]=useState(false); const [section,setSection]=useState<Section>('dashboard'); const [open,setOpen]=useState(false); const [query,setQuery]=useState('');
- useEffect(()=>{setData(loadData());setReady(true)},[]); useEffect(()=>{if(ready)saveData(data)},[data,ready]);
+ const [logged,setLogged]=useState(false); const [theme,setTheme]=useState<'light'|'dark'>('light');
+ useEffect(()=>{setData(loadData());setReady(true);setLogged(localStorage.getItem('cp-auth')==='1');setTheme((localStorage.getItem('cp-theme') as 'light'|'dark')||'light')},[]); useEffect(()=>{if(ready)saveData(data)},[data,ready]);
+ useEffect(()=>{if(ready){localStorage.setItem('cp-theme',theme);document.documentElement.dataset.theme=theme}},[theme,ready]);
  const ingresos=data.movimientos.filter(m=>m.tipo==='cobro').reduce((a,b)=>a+b.monto,0); const gastos=data.movimientos.filter(m=>m.tipo==='gasto').reduce((a,b)=>a+b.monto,0); const contratado=data.proyectos.reduce((a,b)=>a+b.monto,0); const porCobrar=Math.max(0,contratado-ingresos); const caja=data.cuentas.reduce((a,b)=>a+b.saldoInicial,0)+ingresos-gastos;
  const menu:[Section,string,any][]=[['dashboard','Dashboard',Building2],['clientes','Clientes',Users],['cotizaciones','Cotizaciones',FileText],['proyectos','Proyectos',FolderKanban],['bitacoras','Bitácoras',NotebookPen],['cobros','Cobros y avances',WalletCards],['facturas','Facturación',ReceiptText],['gastos','Gastos',CircleDollarSign],['contratistas','Contratistas',HardHat],['caja','Caja y bancos',Landmark],['reportes','Reportes',BarChart3],['config','Configuración',Settings]];
  const go=(s:Section)=>{setSection(s);setOpen(false);setQuery('')};
- return <div className="app-shell">
-  <aside className={open?'sidebar open':'sidebar'}><div className="brand"><div className="brand-mark">CP</div><div><b>CONSTRUPLATA</b><span>ERP Construcción</span></div><button className="icon mobile" onClick={()=>setOpen(false)}><X size={20}/></button></div><nav>{menu.map(([id,label,I])=><button key={id} className={section===id?'nav active':'nav'} onClick={()=>go(id)}><I size={19}/><span>{label}</span></button>)}</nav><div className="side-foot"><span>Versión 1.0</span><small>Datos guardados en este navegador</small></div></aside>
-  <main className="main"><header className="topbar"><button className="icon mobile" onClick={()=>setOpen(true)}><Menu/></button><div><h1>{menu.find(x=>x[0]===section)?.[1]}</h1><p>Control administrativo y financiero</p></div><div className="top-actions"><div className="search"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar..."/></div><div className="avatar">JC</div></div></header>
+ if(!ready)return <div className="boot"><div className="boot-ring"/><b>CONSTRUPLATA</b></div>;
+ if(!logged)return <Login onLogin={()=>{localStorage.setItem('cp-auth','1');setLogged(true)}}/>;
+ return <div className={`app-shell ${theme==='dark'?'dark':''}` }>
+  <aside className={open?'sidebar open':'sidebar'}><div className="brand"><div className="brand-logo"><img src="/logo-construplata.jpg" alt="CONSTRUPLATA"/></div><div><b>CONSTRUPLATA</b><span>Control & Ingeniería</span></div><button className="icon mobile" onClick={()=>setOpen(false)}><X size={20}/></button></div><nav>{menu.map(([id,label,I])=><button key={id} className={section===id?'nav active':'nav'} onClick={()=>go(id)}><I size={19}/><span>{label}</span></button>)}</nav><div className="side-foot"><span>Versión 1.0</span><small>Datos guardados en este navegador</small></div></aside>
+  <main className="main"><header className="topbar"><button className="icon mobile" onClick={()=>setOpen(true)}><Menu/></button><div><h1>{menu.find(x=>x[0]===section)?.[1]}</h1><p>Control administrativo y financiero</p></div><div className="top-actions"><button className="icon top-icon" title="Cambiar tema" onClick={()=>setTheme(theme==='light'?'dark':'light')}>{theme==='light'?<Moon size={18}/>:<Sun size={18}/>}</button><div className="search"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar..."/></div><div className="avatar">JC</div><button className="icon top-icon logout" title="Cerrar sesión" onClick={()=>{localStorage.removeItem('cp-auth');setLogged(false)}}><LogOut size={18}/></button></div></header>
   <div className="content">
    {section==='dashboard'&&<Dashboard data={data} ingresos={ingresos} gastos={gastos} contratado={contratado} porCobrar={porCobrar} caja={caja} go={go}/>} 
    {section==='clientes'&&<Clientes data={data} setData={setData} query={query}/>} 
@@ -32,6 +36,29 @@ export default function ERPApp(){
    {section==='reportes'&&<Reportes data={data}/>} 
    {section==='config'&&<Configuracion data={data} setData={setData}/>} 
   </div></main>{open&&<div className="overlay" onClick={()=>setOpen(false)}/>}</div>
+}
+
+function Login({onLogin}:{onLogin:()=>void}){
+ const [email,setEmail]=useState('admin@construplata.com'); const [password,setPassword]=useState(''); const [error,setError]=useState('');
+ const submit=(e:React.FormEvent)=>{e.preventDefault();if(email.toLowerCase()==='admin@construplata.com'&&password==='Admin123*'){setError('');onLogin()}else setError('Correo o contraseña incorrectos')};
+ return <div className="login-page">
+  <div className="login-orb orb-a"/><div className="login-orb orb-b"/>
+  <section className="login-showcase">
+   <div className="showcase-brand"><img src="/logo-construplata.jpg" alt="CONSTRUPLATA"/><span>CONSTRUPLATA</span></div>
+   <div className="showcase-copy"><span className="login-kicker">ERP DE CONSTRUCCIÓN</span><h1>Control total.<br/><em>Decisiones claras.</em></h1><p>Administra cotizaciones, proyectos, bitácoras y finanzas desde un único centro de control diseñado para ingeniería civil.</p><div className="showcase-chips"><span>Proyectos</span><span>Finanzas</span><span>Bitácoras</span></div></div>
+   <div className="showcase-foot">Gestión inteligente para construir mejor.</div>
+  </section>
+  <section className="login-panel"><form className="login-card" onSubmit={submit}>
+   <div className="login-mobile-logo"><img src="/logo-construplata.jpg" alt="CONSTRUPLATA"/></div>
+   <div className="secure-badge"><ShieldCheck size={16}/> Acceso seguro</div><h2>Bienvenido</h2><p>Ingresa a tu centro de control empresarial.</p>
+   <label>Correo electrónico<input autoFocus type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="correo@empresa.com"/></label>
+   <label>Contraseña<input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••"/></label>
+   {error&&<div className="login-error">{error}</div>}
+   <button className="login-button" type="submit">Entrar al sistema <ArrowRight size={19}/></button>
+   <div className="demo-access"><b>Acceso inicial</b><span>admin@construplata.com</span><span>Admin123*</span></div>
+   <small>© 2026 CONSTRUPLATA SRL · República Dominicana</small>
+  </form></section>
+ </div>
 }
 
 function Dashboard({data,ingresos,gastos,contratado,porCobrar,caja,go}:{data:AppData;ingresos:number;gastos:number;contratado:number;porCobrar:number;caja:number;go:(s:Section)=>void}){
