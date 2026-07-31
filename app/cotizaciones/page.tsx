@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import PageFrame from '@/components/PageFrame';
+import { printQuotationDocument } from '@/lib/printQuotation';
 import { useData } from '@/components/DataProvider';
 import { money, uid } from '@/lib/store';
 import {
@@ -711,14 +712,17 @@ function Cotizaciones() {
                           type="button"
                           className="cliente-action-btn edit"
                           title="Imprimir"
-                          onClick={() => {
-                            setPreviewId(cotizacion.id);
-                            window.setTimeout(() => window.print(), 250);
-                          }}
+                          
                         >
                           <Printer size={16} />
                         </button>
+onClick={() => {
+  setPreviewId(cotizacion.id);
 
+  window.setTimeout(() => {
+    printQuotationDocument();
+  }, 300);
+}}
                         <button
                           type="button"
                           className="cliente-action-btn delete"
@@ -768,7 +772,7 @@ function Cotizaciones() {
               <button
                 type="button"
                 className="primary"
-                onClick={() => window.print()}
+             onClick={printQuotationDocument}
               >
                 <Printer size={17} />
                 Imprimir / PDF
@@ -816,7 +820,10 @@ function QuotationTemplate({
   );
 
   return (
-    <article className="quotation-document">
+   <article
+  id="quotation-print-area"
+  className="quotation-document"
+>
       <header className="quotation-document-header">
         <div className="quotation-brand-block">
           <img src="/logo-construplata.jpg" alt="CONSTRUPLATA" />
