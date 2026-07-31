@@ -2080,3 +2080,112 @@ html[data-theme='dark'] .mini-metric {
     grid-column: 2;
   }
 }
+
+/* Interacciones funcionales del dashboard */
+
+.hero-summary-item,
+.hero-financial-card,
+.kpi-card-v2,
+.project-spotlight-main,
+.project-progress-card,
+.quick-action-card,
+.activity-item-v2,
+.dashboard-link-panel,
+.mini-metric {
+  cursor: pointer;
+}
+
+.hero-summary-item,
+.kpi-card-v2,
+.project-spotlight-main,
+.project-progress-card,
+.quick-action-card,
+.activity-item-v2,
+.mini-metric {
+  position: relative;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.hero-summary-item:hover,
+.kpi-card-v2:hover,
+.project-spotlight-main:hover,
+.project-progress-card:hover,
+.quick-action-card:hover,
+.activity-item-v2:hover,
+.mini-metric:hover {
+  transform: translateY(-3px);
+  border-color: rgba(23, 105, 224, 0.28);
+  box-shadow: 0 16px 34px rgba(23, 105, 224, 0.1);
+}
+
+.hero-financial-card {
+  color: inherit;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.hero-financial-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 45px rgba(23, 105, 224, 0.16);
+}
+
+.summary-link-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: var(--blue);
+}
+
+.financial-card-link,
+.open-project-link,
+.progress-card-link {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.kpi-open-icon {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  color: var(--blue);
+}
+
+.quick-action-card {
+  grid-template-columns: 48px 1fr 30px;
+  align-items: center;
+  color: inherit;
+}
+
+.quick-action-copy {
+  min-width: 0;
+}
+
+.quick-action-arrow {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--blue);
+  background: rgba(23, 105, 224, 0.08);
+}
+
+.dashboard-link-panel {
+  display: block;
+  color: inherit;
+}
+
+.mini-metric {
+  grid-template-columns: 42px 1fr 20px;
+  color: inherit;
+}
