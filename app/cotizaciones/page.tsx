@@ -707,22 +707,39 @@ function Cotizaciones() {
                         >
                           <Pencil size={16} />
                         </button>
+<button
+  type="button"
+  className="cliente-action-btn edit"
+  title="Editar"
+  onClick={() => openEdit(cotizacion)}
+>
+  <Pencil size={16} />
+</button>
 
-                        <button
-                          type="button"
-                          className="cliente-action-btn edit"
-                          title="Imprimir"
-                          
-                        >
-                          <Printer size={16} />
-                        </button>
-onClick={() => {
-  setPreviewId(cotizacion.id);
+<button
+  type="button"
+  className="cliente-action-btn edit"
+  title="Imprimir"
+  onClick={() => {
+    setPreviewId(cotizacion.id);
 
-  window.setTimeout(() => {
-    printQuotationDocument();
-  }, 300);
-}}
+    window.setTimeout(() => {
+      printQuotationDocument();
+    }, 300);
+  }}
+>
+  <Printer size={16} />
+</button>
+
+<button
+  type="button"
+  className="cliente-action-btn delete"
+  title="Eliminar"
+  onClick={() => deleteCotizacion(cotizacion.id)}
+>
+  <Trash2 size={16} />
+</button>
+                       
                         <button
                           type="button"
                           className="cliente-action-btn delete"
