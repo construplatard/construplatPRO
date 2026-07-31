@@ -2413,950 +2413,1368 @@ html[data-theme='dark'] .ghost-client-btn {
   }
 }
 
-
-'use client';
-
-import { useMemo, useState } from 'react';
-import PageFrame from '@/components/PageFrame';
-import ModuleHeader from '@/components/ModuleHeader';
-import { useData } from '@/components/DataProvider';
-import { money, uid } from '@/lib/store';
-import {
-  Plus,
-  Trash2,
-  X,
-  FileText,
-  CheckCircle2,
-  Printer,
-  Eye,
-  Pencil,
-} from 'lucide-react';
-
-type Partida = {
-  id: string;
-  descripcion: string;
-  detalle: string;
-  cantidad: number;
-  unidad: string;
-  precio: number;
-};
-
-type CotizacionExtendida = {
-  id: string;
-  numero: string;
-  clienteId: string;
-  proyecto: string;
-  monto: number;
-  estado: string;
-  descripcion?: string;
-  fecha?: string;
-  vendedor?: string;
-  requiereComprobante?: boolean;
-  subtotal?: number;
-  itbis?: number;
-  total?: number;
-  partidas?: Partida[];
-};
-
-const vendedorPredeterminado = 'Juan Carlos Quiñones';
-
-const emptyPartida = (): Partida => ({
-  id: uid('partida'),
-  descripcion: '',
-  detalle: '',
-  cantidad: 1,
-  unidad: 'und',
-  precio: 0,
-});
-
-const formatDate = (value: string) => {
-  if (!value) return '';
-  const [year, month, day] = value.split('-');
-  return `${day}/${month}/${year}`;
-};
-
-export default function Page() {
-  return (
-    <PageFrame>
-      <Cotizaciones />
-    </PageFrame>
-  );
+* {
+  box-sizing: border-box;
 }
 
-function Cotizaciones() {
-  const { data, setData } = useData();
-
-  const cotizaciones = data.cotizaciones as CotizacionExtendida[];
-
-  const [showForm, setShowForm] = useState(false);
-  const [previewId, setPreviewId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  const [form, setForm] = useState({
-    clienteId: data.clientes[0]?.id || '',
-    proyecto: '',
-    descripcion: '',
-    fecha: new Date().toISOString().slice(0, 10),
-    vendedor: vendedorPredeterminado,
-    requiereComprobante: false,
-    partidas: [emptyPartida()],
-  });
-
-  const nextNumber = useMemo(() => {
-    const numbers = cotizaciones
-      .map((item) => {
-        const match = String(item.numero || '').match(/(\d+)/);
-        return match ? Number(match[1]) : 0;
-      })
-      .filter(Boolean);
-
-    const highest = Math.max(25, ...numbers);
-    return `COT-${String(highest + 1).padStart(3, '0')}`;
-  }, [cotizaciones]);
-
-  const subtotal = form.partidas.reduce(
-    (total, partida) =>
-      total + Number(partida.cantidad || 0) * Number(partida.precio || 0),
-    0
-  );
-
-  const itbis = form.requiereComprobante ? subtotal * 0.18 : 0;
-  const total = subtotal + itbis;
-
-  const resetForm = () => {
-    setEditingId(null);
-    setForm({
-      clienteId: data.clientes[0]?.id || '',
-      proyecto: '',
-      descripcion: '',
-      fecha: new Date().toISOString().slice(0, 10),
-      vendedor: vendedorPredeterminado,
-      requiereComprobante: false,
-      partidas: [emptyPartida()],
-    });
-  };
-
-  const openNew = () => {
-    resetForm();
-    setShowForm(true);
-  };
-
-  const openEdit = (cotizacion: CotizacionExtendida) => {
-    setEditingId(cotizacion.id);
-    setForm({
-      clienteId: cotizacion.clienteId || '',
-      proyecto: cotizacion.proyecto || '',
-      descripcion: cotizacion.descripcion || '',
-      fecha: cotizacion.fecha || new Date().toISOString().slice(0, 10),
-      vendedor: cotizacion.vendedor || vendedorPredeterminado,
-      requiereComprobante: Boolean(cotizacion.requiereComprobante),
-      partidas:
-        cotizacion.partidas?.length
-          ? cotizacion.partidas
-          : [
-              {
-                ...emptyPartida(),
-                descripcion: cotizacion.proyecto || 'Trabajo contratado',
-                precio: Number(cotizacion.monto || 0),
-              },
-            ],
-    });
-
-    setShowForm(true);
-  };
-
-  const updatePartida = (
-    id: string,
-    field: keyof Partida,
-    value: string | number
-  ) => {
-    setForm((current) => ({
-      ...current,
-      partidas: current.partidas.map((partida) =>
-        partida.id === id
-          ? {
-              ...partida,
-              [field]:
-                field === 'cantidad' || field === 'precio'
-                  ? Number(value)
-                  : value,
-            }
-          : partida
-      ),
-    }));
-  };
-
-  const addPartida = () => {
-    setForm((current) => ({
-      ...current,
-      partidas: [...current.partidas, emptyPartida()],
-    }));
-  };
-
-  const removePartida = (id: string) => {
-    setForm((current) => ({
-      ...current,
-      partidas:
-        current.partidas.length > 1
-          ? current.partidas.filter((partida) => partida.id !== id)
-          : current.partidas,
-    }));
-  };
-
-  const saveCotizacion = () => {
-    if (!form.clienteId) {
-      alert('Selecciona un cliente.');
-      return;
-    }
-
-    if (!form.proyecto.trim()) {
-      alert('Escribe el nombre del trabajo o proyecto.');
-      return;
-    }
-
-    if (!form.partidas.some((partida) => partida.descripcion.trim())) {
-      alert('Agrega al menos una partida.');
-      return;
-    }
-
-    setData((current) => {
-      const currentCotizaciones =
-        current.cotizaciones as CotizacionExtendida[];
-
-      const saved: CotizacionExtendida = {
-        id: editingId || uid('cot'),
-        numero:
-          editingId
-            ? currentCotizaciones.find((item) => item.id === editingId)
-                ?.numero || nextNumber
-            : nextNumber,
-        clienteId: form.clienteId,
-        proyecto: form.proyecto.trim(),
-        monto: total,
-        estado:
-          editingId
-            ? currentCotizaciones.find((item) => item.id === editingId)
-                ?.estado || 'Borrador'
-            : 'Borrador',
-        descripcion: form.descripcion.trim(),
-        fecha: form.fecha,
-        vendedor: form.vendedor.trim() || vendedorPredeterminado,
-        requiereComprobante: form.requiereComprobante,
-        subtotal,
-        itbis,
-        total,
-        partidas: form.partidas,
-      };
-
-      const nextCotizaciones = editingId
-        ? currentCotizaciones.map((item) =>
-            item.id === editingId ? saved : item
-          )
-        : [saved, ...currentCotizaciones];
-
-      return {
-        ...current,
-        cotizaciones: nextCotizaciones as any,
-      };
-    });
-
-    setShowForm(false);
-    resetForm();
-  };
-
-  const changeStatus = (id: string, estado: string) => {
-    setData((current) => ({
-      ...current,
-      cotizaciones: (
-        current.cotizaciones as CotizacionExtendida[]
-      ).map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              estado,
-            }
-          : item
-      ) as any,
-    }));
-  };
-
-  const deleteCotizacion = (id: string) => {
-    if (!window.confirm('¿Deseas eliminar esta cotización?')) return;
-
-    setData((current) => ({
-      ...current,
-      cotizaciones: (
-        current.cotizaciones as CotizacionExtendida[]
-      ).filter((item) => item.id !== id) as any,
-    }));
-  };
-
-  const preview = cotizaciones.find((item) => item.id === previewId) || null;
-
-  return (
-    <>
-      <ModuleHeader
-        title="Cotizaciones"
-        subtitle="Plantilla corporativa, numeración automática y aprobación"
-        action={
-          <button type="button" className="primary" onClick={openNew}>
-            <Plus size={18} />
-            Nueva cotización
-          </button>
-        }
-      />
-
-      <section className="stats">
-        <article className="stat">
-          <FileText size={21} />
-          <span>Total cotizaciones</span>
-          <b>{cotizaciones.length}</b>
-        </article>
-
-        <article className="stat">
-          <CheckCircle2 size={21} />
-          <span>Aprobadas</span>
-          <b>
-            {
-              cotizaciones.filter(
-                (item) => item.estado === 'Aprobada'
-              ).length
-            }
-          </b>
-        </article>
-
-        <article className="stat">
-          <FileText size={21} />
-          <span>Próximo número</span>
-          <b>{nextNumber.replace('COT-', '#')}</b>
-        </article>
-
-        <article className="stat">
-          <FileText size={21} />
-          <span>Monto cotizado</span>
-          <b>
-            {money(
-              cotizaciones.reduce(
-                (sum, item) => sum + Number(item.total ?? item.monto ?? 0),
-                0
-              )
-            )}
-          </b>
-        </article>
-      </section>
-
-      {showForm && (
-        <section className="form-card quotation-builder">
-          <div className="quotation-builder-head">
-            <div>
-              <span className="eyebrow">
-                {editingId ? 'Editar cotización' : 'Nueva cotización'}
-              </span>
-              <h3>
-                {editingId
-                  ? 'Actualizar cotización'
-                  : `Crear ${nextNumber.replace('COT-', 'Cotización #')}`}
-              </h3>
-            </div>
-
-            <button
-              type="button"
-              className="icon"
-              onClick={() => {
-                setShowForm(false);
-                resetForm();
-              }}
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          <div className="form-grid">
-            <label>
-              Cliente
-              <select
-                value={form.clienteId}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    clienteId: event.target.value,
-                  })
-                }
-              >
-                <option value="">Seleccionar cliente</option>
-                {data.clientes.map((cliente) => (
-                  <option key={cliente.id} value={cliente.id}>
-                    {cliente.nombre}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Fecha
-              <input
-                type="date"
-                value={form.fecha}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    fecha: event.target.value,
-                  })
-                }
-              />
-            </label>
-
-            <label>
-              Trabajo / proyecto
-              <input
-                value={form.proyecto}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    proyecto: event.target.value,
-                  })
-                }
-                placeholder="Ej: Remodelación de terraza"
-              />
-            </label>
-
-            <label>
-              Vendedor
-              <input
-                value={form.vendedor}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    vendedor: event.target.value,
-                  })
-                }
-              />
-            </label>
-
-            <label className="wide">
-              Descripción del proyecto
-              <textarea
-                value={form.descripcion}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    descripcion: event.target.value,
-                  })
-                }
-                placeholder="Describe el alcance general de los trabajos..."
-              />
-            </label>
-          </div>
-
-          <div className="quotation-items">
-            <div className="quotation-items-head">
-              <div>
-                <span className="eyebrow">Partidas</span>
-                <h4>Detalle de la cotización</h4>
-              </div>
-
-              <button
-                type="button"
-                className="ghost-btn-v2"
-                onClick={addPartida}
-              >
-                <Plus size={16} />
-                Agregar partida
-              </button>
-            </div>
-
-            {form.partidas.map((partida, index) => (
-              <div className="quotation-item-row" key={partida.id}>
-                <div className="quotation-item-number">{index + 1}</div>
-
-                <label>
-                  Descripción
-                  <input
-                    value={partida.descripcion}
-                    onChange={(event) =>
-                      updatePartida(
-                        partida.id,
-                        'descripcion',
-                        event.target.value
-                      )
-                    }
-                    placeholder="Ej: Pintura interior premium"
-                  />
-                </label>
-
-                <label>
-                  Detalle
-                  <input
-                    value={partida.detalle}
-                    onChange={(event) =>
-                      updatePartida(
-                        partida.id,
-                        'detalle',
-                        event.target.value
-                      )
-                    }
-                    placeholder="Incluye materiales y mano de obra"
-                  />
-                </label>
-
-                <label>
-                  Cantidad
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={partida.cantidad}
-                    onChange={(event) =>
-                      updatePartida(
-                        partida.id,
-                        'cantidad',
-                        event.target.value
-                      )
-                    }
-                  />
-                </label>
-
-                <label>
-                  Unidad
-                  <input
-                    value={partida.unidad}
-                    onChange={(event) =>
-                      updatePartida(
-                        partida.id,
-                        'unidad',
-                        event.target.value
-                      )
-                    }
-                    placeholder="m², und, glb"
-                  />
-                </label>
-
-                <label>
-                  Precio
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={partida.precio}
-                    onChange={(event) =>
-                      updatePartida(
-                        partida.id,
-                        'precio',
-                        event.target.value
-                      )
-                    }
-                  />
-                </label>
-
-                <div className="quotation-item-total">
-                  <span>Total</span>
-                  <b>
-                    {money(
-                      Number(partida.cantidad || 0) *
-                        Number(partida.precio || 0)
-                    )}
-                  </b>
-                </div>
-
-                <button
-                  type="button"
-                  className="cliente-action-btn delete"
-                  onClick={() => removePartida(partida.id)}
-                  title="Eliminar partida"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div className="quotation-tax-card">
-            <label className="fiscal-toggle">
-              <input
-                type="checkbox"
-                checked={form.requiereComprobante}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    requiereComprobante: event.target.checked,
-                  })
-                }
-              />
-
-              <span>
-                <b>El cliente requiere comprobante fiscal</b>
-                <small>
-                  Al activarlo, se adiciona el 18% de ITBIS.
-                </small>
-              </span>
-            </label>
-
-            <div className="quotation-totals">
-              <div>
-                <span>Subtotal</span>
-                <b>{money(subtotal)}</b>
-              </div>
-
-              {form.requiereComprobante && (
-                <div>
-                  <span>ITBIS (18%)</span>
-                  <b>{money(itbis)}</b>
-                </div>
-              )}
-
-              <div className="quotation-grand-total">
-                <span>Total general</span>
-                <b>{money(total)}</b>
-              </div>
-            </div>
-          </div>
-
-          <div className="quotation-note">
-            <b>Nota:</b> En caso de que el cliente requiera comprobante
-            fiscal, se adicionará el 18% correspondiente al ITBIS sobre el
-            subtotal de esta cotización.
-          </div>
-
-          <div className="cp-modal-actions">
-            <button
-              type="button"
-              className="ghost-client-btn"
-              onClick={() => {
-                setShowForm(false);
-                resetForm();
-              }}
-            >
-              Cancelar
-            </button>
-
-            <button
-              type="button"
-              className="primary"
-              onClick={saveCotizacion}
-            >
-              {editingId ? 'Guardar cambios' : 'Guardar cotización'}
-            </button>
-          </div>
-        </section>
-      )}
-
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Número</th>
-              <th>Cliente</th>
-              <th>Trabajo</th>
-              <th>Fecha</th>
-              <th>Total</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {cotizaciones.length ? (
-              cotizaciones.map((cotizacion) => {
-                const cliente = data.clientes.find(
-                  (item) => item.id === cotizacion.clienteId
-                );
-
-                return (
-                  <tr key={cotizacion.id}>
-                    <td>
-                      <b>
-                        {cotizacion.numero.replace('COT-', '#')}
-                      </b>
-                    </td>
-
-                    <td>{cliente?.nombre || 'Sin cliente'}</td>
-                    <td>{cotizacion.proyecto}</td>
-                    <td>{formatDate(cotizacion.fecha || '')}</td>
-                    <td>
-                      {money(
-                        Number(cotizacion.total ?? cotizacion.monto ?? 0)
-                      )}
-                    </td>
-
-                    <td>
-                      <select
-                        className="quotation-status"
-                        value={cotizacion.estado}
-                        onChange={(event) =>
-                          changeStatus(
-                            cotizacion.id,
-                            event.target.value
-                          )
-                        }
-                      >
-                        <option value="Borrador">Borrador</option>
-                        <option value="Enviada">Enviada</option>
-                        <option value="Aprobada">Aprobada</option>
-                        <option value="Rechazada">Rechazada</option>
-                      </select>
-
-                      {cotizacion.estado === 'Aprobada' && (
-                        <small className="approved-contract-note">
-                          Disponible en Contratos
-                        </small>
-                      )}
-                    </td>
-
-                    <td>
-                      <div className="cliente-actions">
-                        <button
-                          type="button"
-                          className="cliente-action-btn edit"
-                          title="Vista previa"
-                          onClick={() => setPreviewId(cotizacion.id)}
-                        >
-                          <Eye size={16} />
-                        </button>
-
-                        <button
-                          type="button"
-                          className="cliente-action-btn edit"
-                          title="Editar"
-                          onClick={() => openEdit(cotizacion)}
-                        >
-                          <Pencil size={16} />
-                        </button>
-
-                        <button
-                          type="button"
-                          className="cliente-action-btn edit"
-                          title="Imprimir"
-                          onClick={() => {
-                            setPreviewId(cotizacion.id);
-                            window.setTimeout(() => window.print(), 250);
-                          }}
-                        >
-                          <Printer size={16} />
-                        </button>
-
-                        <button
-                          type="button"
-                          className="cliente-action-btn delete"
-                          title="Eliminar"
-                          onClick={() =>
-                            deleteCotizacion(cotizacion.id)
-                          }
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan={7}>
-                  <div className="empty">
-                    No hay cotizaciones registradas.
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {preview && (
-        <div
-          className="cp-modal-overlay quotation-preview-overlay"
-          onClick={() => setPreviewId(null)}
-        >
-          <div
-            className="quotation-preview-shell"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="quotation-preview-toolbar no-print">
-              <button
-                type="button"
-                className="ghost-client-btn"
-                onClick={() => setPreviewId(null)}
-              >
-                Cerrar
-              </button>
-
-              <button
-                type="button"
-                className="primary"
-                onClick={() => window.print()}
-              >
-                <Printer size={17} />
-                Imprimir / PDF
-              </button>
-            </div>
-
-            <QuotationTemplate
-              cotizacion={preview}
-              cliente={
-                data.clientes.find(
-                  (item) => item.id === preview.clienteId
-                ) || null
-              }
-            />
-          </div>
-        </div>
-      )}
-    </>
-  );
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  background: #f4f7fb;
+  color: #142033;
 }
 
-function QuotationTemplate({
-  cotizacion,
-  cliente,
-}: {
-  cotizacion: CotizacionExtendida;
-  cliente: {
-    nombre: string;
-    direccion: string;
-    rnc: string;
-    telefono: string;
-    email: string;
-  } | null;
-}) {
-  const subtotal = Number(
-    cotizacion.subtotal ?? cotizacion.monto ?? 0
-  );
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
 
-  const itbis = cotizacion.requiereComprobante
-    ? Number(cotizacion.itbis ?? subtotal * 0.18)
-    : 0;
+button {
+  cursor: pointer;
+}
 
-  const total = Number(
-    cotizacion.total ?? subtotal + itbis
-  );
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
-  return (
-    <article className="quotation-document">
-      <header className="quotation-document-header">
-        <div className="quotation-brand-block">
-          <img src="/logo-construplata.jpg" alt="CONSTRUPLATA" />
-          <h2>CONSTRUPLATA</h2>
-          <b>CONSTRUPLATA SRL</b>
-          <span>Santo Domingo, República Dominicana</span>
-        </div>
+:root {
+  --blue: #1769e0;
+  --blue-2: #1f8ff0;
+  --nav: #07172d;
+  --nav-2: #0d2f56;
+  --muted: #718198;
+  --line: #e3eaf3;
+  --card: rgba(255, 255, 255, 0.92);
+  --surface: #f5f8fc;
+  --text: #142033;
+  --shadow: 0 18px 50px rgba(18, 54, 93, 0.08);
+  --soft-shadow: 0 8px 24px rgba(26, 61, 103, 0.07);
+}
 
-        <div className="quotation-document-info">
-          <h1>
-            COTIZACIÓN{' '}
-            {cotizacion.numero.replace('COT-', '#')}
-          </h1>
+html[data-theme="dark"] {
+  --card: rgba(14, 28, 48, 0.92);
+  --surface: #081423;
+  --text: #edf5ff;
+  --muted: #96abc2;
+  --line: rgba(148, 172, 202, 0.14);
+  background: #081423;
+  color: var(--text);
+}
 
-          <div>
-            <b>FECHA:</b>
-            <span>{formatDate(cotizacion.fecha || '')}</span>
-          </div>
+body {
+  background: var(--surface);
+  color: var(--text);
+}
 
-          <div>
-            <b>VENDEDOR:</b>
-            <span>
-              {cotizacion.vendedor || vendedorPredeterminado}
-            </span>
-          </div>
+body:has(.shell) {
+  min-height: 100vh;
+}
 
-          <div>
-            <b>CLIENTE:</b>
-            <span>{cliente?.nombre || 'Sin cliente'}</span>
-          </div>
-        </div>
-      </header>
+.boot {
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: var(--blue);
+}
 
-      <section className="quotation-description">
-        <h3>DESCRIPCIÓN DEL PROYECTO</h3>
-        <p>
-          {cotizacion.descripcion ||
-            cotizacion.proyecto ||
-            'Sin descripción.'}
-        </p>
-      </section>
+/* =========================
+   ESTRUCTURA
+========================= */
 
-      <table className="quotation-document-table">
-        <thead>
-          <tr>
-            <th>DESCRIPCIÓN</th>
-            <th>CANT.</th>
-            <th>PRECIO</th>
-            <th>TOTAL</th>
-          </tr>
-        </thead>
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 92% 5%, rgba(30, 136, 229, 0.08), transparent 26%),
+    var(--surface);
+}
 
-        <tbody>
-          {(cotizacion.partidas || []).map((partida, index) => (
-            <tr key={partida.id}>
-              <td>
-                <b>
-                  {index + 1}. {partida.descripcion}
-                </b>
-                {partida.detalle && <small>{partida.detalle}</small>}
-              </td>
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  width: 280px;
+  padding: 18px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 24% 0%, rgba(58, 155, 255, 0.22), transparent 32%),
+    linear-gradient(180deg, #06152a 0%, #092748 50%, #0d3762 100%);
+  box-shadow: 16px 0 50px rgba(2, 17, 38, 0.2);
+  transition: width 0.28s ease, transform 0.28s ease;
+}
 
-              <td>
-                {partida.cantidad} {partida.unidad}
-              </td>
+.sidebar::before {
+  content: "";
+  position: absolute;
+  inset: auto -80px -120px auto;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
 
-              <td>{money(partida.precio)}</td>
+.sidebar::after {
+  content: "";
+  position: absolute;
+  top: 92px;
+  right: -85px;
+  width: 190px;
+  height: 190px;
+  border-radius: 38px;
+  background: rgba(32, 138, 235, 0.11);
+  transform: rotate(35deg);
+}
 
-              <td>
-                <b>
-                  {money(partida.cantidad * partida.precio)}
-                </b>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+.main {
+  margin-left: 280px;
+  width: calc(100% - 280px);
+  min-width: 0;
+  transition: margin-left 0.28s ease, width 0.28s ease;
+}
 
-      <div className="quotation-document-bottom">
-        <div className="quotation-validity">
-          Cotización válida por 30 días.
-        </div>
+.sidebar-collapsed .sidebar {
+  width: 92px;
+}
 
-        <div className="quotation-document-totals">
-          <div>
-            <span>Subtotal</span>
-            <b>{money(subtotal)}</b>
-          </div>
+.sidebar-collapsed .main {
+  margin-left: 92px;
+  width: calc(100% - 92px);
+}
 
-          {cotizacion.requiereComprobante && (
-            <div>
-              <span>ITBIS (18%)</span>
-              <b>{money(itbis)}</b>
-            </div>
-          )}
+.sidebar-collapsed .brand-copy,
+.sidebar-collapsed .nav-label,
+.sidebar-collapsed .nav-group-label,
+.sidebar-collapsed .side-profile-copy,
+.sidebar-collapsed .sidebar-collapse span {
+  display: none;
+}
 
-          <div className="quotation-total-highlight">
-            <span>Total general</span>
-            <b>{money(total)}</b>
-          </div>
-        </div>
-      </div>
+.sidebar-collapsed .brand {
+  justify-content: center;
+}
 
-      <p className="quotation-document-note">
-        <b>Nota:</b> En caso de que el cliente requiera comprobante
-        fiscal, se adicionará el 18% correspondiente al ITBIS sobre el
-        subtotal de esta cotización.
-      </p>
+.sidebar-collapsed .nav {
+  justify-content: center;
+}
 
-      <div className="quotation-signatures">
-        <div>
-          <span />
-          <p>Firma de Cliente</p>
-        </div>
+.sidebar-collapsed .side-profile {
+  justify-content: center;
+}
 
-        <div>
-          <span />
-          <p>Firma de Vendedor</p>
-        </div>
-      </div>
+.sidebar-collapsed .side-logout {
+  display: none;
+}
 
-      <footer>
-        Gracias por confiar en <b>CONSTRUPLATA SRL</b>
-      </footer>
-    </article>
-  );
+/* =========================
+   BRAND
+========================= */
+
+.brand {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 6px 8px 18px;
+}
+
+.brand-mark {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  padding: 5px;
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.2);
+}
+
+.brand img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.brand-copy {
+  min-width: 0;
+}
+
+.brand-copy b {
+  display: block;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+
+.brand-copy span {
+  display: block;
+  margin-top: 5px;
+  color: #9fb8d3;
+  font-size: 11px;
+}
+
+.sidebar-collapse {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  margin: 2px 0 14px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #a8bdd4;
+  font-size: 12px;
+}
+
+.sidebar-collapse:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+/* =========================
+   NAVEGACIÓN
+========================= */
+
+.sidebar-nav {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.nav-group {
+  display: grid;
+  gap: 5px;
+}
+
+.nav-group-label {
+  padding: 0 12px 4px;
+  color: #6f8ba8;
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 46px;
+  padding: 10px 13px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: #b9c9db;
+  font-size: 13px;
+  font-weight: 650;
+  transition: 0.2s ease;
+}
+
+.nav:hover {
+  color: #fff;
+  transform: translateX(3px);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.nav.active {
+  color: #fff;
+  border-color: rgba(102, 185, 255, 0.18);
+  background:
+    linear-gradient(90deg, rgba(23, 105, 224, 0.42), rgba(28, 141, 232, 0.15));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 10px 24px rgba(5, 23, 49, 0.18);
+}
+
+.nav-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  color: #a8c5df;
+}
+
+.nav.active .nav-icon {
+  color: #6ec2ff;
+}
+
+.nav-indicator {
+  position: absolute;
+  right: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #5ec3ff;
+  box-shadow: 0 0 0 5px rgba(94, 195, 255, 0.1);
+}
+
+.side-profile {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.side-avatar,
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  color: #fff;
+  font-weight: 900;
+  background: linear-gradient(135deg, #1769e0, #26a8f2);
+  box-shadow: 0 10px 22px rgba(23, 105, 224, 0.25);
+}
+
+.side-profile-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.side-profile-copy b {
+  display: block;
+  font-size: 12px;
+}
+
+.side-profile-copy span {
+  display: block;
+  margin-top: 3px;
+  color: #89a4c0;
+  font-size: 10px;
+}
+
+.side-logout {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #a9bed2;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.side-logout:hover {
+  color: #fff;
+  background: rgba(255, 99, 99, 0.18);
+}
+
+/* =========================
+   TOPBAR
+========================= */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  min-height: 92px;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(249, 251, 254, 0.84);
+  backdrop-filter: blur(20px);
+}
+
+html[data-theme="dark"] .topbar {
+  background: rgba(8, 20, 35, 0.84);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.page-heading {
+  min-width: 0;
+}
+
+.page-eyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--blue);
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.17em;
+}
+
+.page-heading h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: 24px;
+  letter-spacing: -0.025em;
+}
+
+.page-heading p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.global-search {
+  width: min(360px, 26vw);
+  min-height: 44px;
+  padding: 0 11px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: #75869c;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 6px 22px rgba(34, 67, 105, 0.05);
+}
+
+html[data-theme="dark"] .global-search {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.global-search input {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+}
+
+.global-search kbd {
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.top-action-button,
+.icon {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #52657c;
+  background: rgba(255, 255, 255, 0.8);
+  transition: 0.2s ease;
+}
+
+html[data-theme="dark"] .top-action-button,
+html[data-theme="dark"] .icon {
+  color: #a8bad0;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.top-action-button:hover,
+.icon:hover {
+  color: var(--blue);
+  transform: translateY(-2px);
+  box-shadow: var(--soft-shadow);
+}
+
+.notification-button {
+  position: relative;
+}
+
+.notification-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 7px;
+  height: 7px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #ff5b5b;
+}
+
+.top-user {
+  min-height: 48px;
+  padding: 4px 10px 4px 5px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+html[data-theme="dark"] .top-user {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.top-user-copy b,
+.top-user-copy span {
+  display: block;
+}
+
+.top-user-copy b {
+  font-size: 12px;
+}
+
+.top-user-copy span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+/* =========================
+   CONTENIDO
+========================= */
+
+.content {
+  position: relative;
+  min-height: calc(100vh - 92px);
+  padding: 30px;
+  overflow: hidden;
+}
+
+.page-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.content-glow {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+.content-glow-one {
+  top: -170px;
+  right: -130px;
+  width: 430px;
+  height: 430px;
+  background: rgba(36, 148, 240, 0.08);
+}
+
+.content-glow-two {
+  bottom: -240px;
+  left: 20%;
+  width: 500px;
+  height: 500px;
+  background: rgba(23, 105, 224, 0.045);
+}
+
+/* =========================
+   TÍTULOS Y ACCIONES
+========================= */
+
+.module-head,
+.hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.module-head h2,
+.hero h2 {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 34px);
+  letter-spacing: -0.035em;
+}
+
+.module-head p,
+.hero p {
+  margin: 7px 0 0;
+  color: var(--muted);
+}
+
+.eyebrow {
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+
+.primary {
+  min-height: 48px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #fff;
+  font-weight: 800;
+  background: linear-gradient(135deg, #1769e0, #2198e9);
+  box-shadow: 0 14px 30px rgba(23, 105, 224, 0.24);
+  transition: 0.2s ease;
+}
+
+.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px rgba(23, 105, 224, 0.31);
+}
+
+.primary svg {
+  width: 18px;
+}
+
+/* =========================
+   PANELES Y TARJETAS
+========================= */
+
+.panel,
+.form-card,
+.stat,
+.project-card,
+.table-wrap {
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.panel,
+.form-card {
+  padding: 24px;
+  margin-bottom: 22px;
+  border-radius: 22px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.stat {
+  position: relative;
+  min-height: 124px;
+  padding: 20px;
+  border-radius: 20px;
+  display: grid;
+  align-content: space-between;
+  gap: 9px;
+  overflow: hidden;
+}
+
+.stat::after {
+  content: "";
+  position: absolute;
+  top: -42px;
+  right: -42px;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: rgba(23, 105, 224, 0.06);
+}
+
+.stat > svg {
+  color: var(--blue);
+}
+
+.stat span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.stat b {
+  font-size: 22px;
+  letter-spacing: -0.025em;
+}
+
+/* =========================
+   FORMULARIOS
+========================= */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+  margin-bottom: 18px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: #415168;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+html[data-theme="dark"] label {
+  color: #aabbd0;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+input,
+select,
+textarea {
+  min-height: 46px;
+  padding: 11px 13px;
+  border: 1px solid #d6deea;
+  border-radius: 13px;
+  color: #15253b;
+  background: rgba(255, 255, 255, 0.9);
+  outline: none;
+  transition: 0.2s ease;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  color: #edf5ff;
+  border-color: rgba(148, 172, 202, 0.18);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px rgba(23, 105, 224, 0.1);
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* =========================
+   TABLAS
+========================= */
+
+.table-wrap {
+  overflow: auto;
+  border-radius: 22px;
+}
+
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 16px 18px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+th {
+  color: #74859b;
+  background: rgba(245, 248, 252, 0.82);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+html[data-theme="dark"] th {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+tbody tr {
+  transition: 0.18s ease;
+}
+
+tbody tr:hover {
+  background: rgba(23, 105, 224, 0.035);
+}
+
+td small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+}
+
+.danger-btn {
+  color: #e34848;
+}
+
+/* =========================
+   PROYECTOS Y BITÁCORAS
+========================= */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.project-card {
+  padding: 22px;
+  border-radius: 22px;
+}
+
+.project-card h3 {
+  margin: 14px 0 6px;
+}
+
+.project-card p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.pill {
+  display: inline-flex;
+  padding: 7px 11px;
+  border-radius: 999px;
+  color: #1468d8;
+  background: #e8f2ff;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7edf5;
+}
+
+.progress i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #1769e0, #16a7e8);
+}
+
+.progress.large {
+  margin: 18px 0;
+}
+
+.pc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pc-grid span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.pc-grid b {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+}
+
+.range {
+  margin-top: 16px;
+}
+
+.range input {
+  padding: 0;
+}
+
+.project-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.project-row b,
+.project-row span {
+  display: block;
+}
+
+.project-row span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.progress-wrap {
+  width: 240px;
+}
+
+.progress-wrap > span {
+  margin-bottom: 5px;
+  text-align: right;
+  font-size: 12px;
+}
+
+.timeline {
+  display: grid;
+  gap: 16px;
+}
+
+.log {
+  display: grid;
+  grid-template-columns: 74px 1fr;
+  gap: 16px;
+}
+
+.datebox {
+  height: 74px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  color: #fff;
+  background: linear-gradient(145deg, #0a2b51, #15548d);
+  box-shadow: var(--soft-shadow);
+}
+
+.datebox b {
+  font-size: 24px;
+}
+
+.datebox span {
+  font-size: 10px;
+}
+
+.log-body {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--soft-shadow);
+}
+
+.log-head {
+  display: flex;
+  justify-content: space-between;
+}
+
+.log-head h3 {
+  margin: 0;
+}
+
+.log-head span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* =========================
+   LOGIN EXISTENTE
+========================= */
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 58%) minmax(420px, 42%);
+  background: #f7f9fc;
+  overflow: hidden;
+}
+
+.login-showcase {
+  min-height: 100vh;
+  padding: 54px 13vw 54px 6.5vw;
+  margin-right: -9vw;
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 9vw) 100%, 0 100%);
+  background:
+    radial-gradient(circle at 70% 20%, rgba(25, 132, 232, 0.38), transparent 38%),
+    linear-gradient(145deg, #06162c 0%, #09294d 54%, #0a3b70 100%);
+}
+
+.showcase-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.showcase-brand img {
+  width: 62px;
+  height: 62px;
+  padding: 5px;
+  object-fit: contain;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.showcase-copy {
+  margin: auto 0;
+  max-width: 680px;
+}
+
+.login-kicker {
+  color: #60b8ff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+}
+
+.showcase-copy h1 {
+  margin: 22px 0 12px;
+  font-size: clamp(48px, 5.4vw, 82px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+
+.showcase-copy h1 em {
+  color: #4eb8ff;
+  font-style: normal;
+}
+
+.showcase-copy p {
+  max-width: 600px;
+  color: #bdd0e5;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.showcase-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.showcase-chips span {
+  padding: 9px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+}
+
+.showcase-foot {
+  color: #9bb2ce;
+  font-size: 12px;
+}
+
+.rotating-message {
+  min-height: 190px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.rotating-message.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.phrase-indicators {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.phrase-dot {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.32);
+  transition: 0.3s ease;
+}
+
+.phrase-dot.active {
+  width: 32px;
+  background: #4eb8ff;
+}
+
+.login-panel {
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 40px 5vw 40px 10vw;
+  background:
+    radial-gradient(circle at 38% 46%, rgba(23, 105, 224, 0.09), transparent 34%),
+    linear-gradient(145deg, #f9fbfe, #eef3f9);
+}
+
+.login-card {
+  width: min(450px, 100%);
+  padding: 40px;
+  border: 1px solid rgba(214, 225, 239, 0.95);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 30px 80px rgba(0, 25, 60, 0.17);
+}
+
+.secure-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  color: #1769e0;
+  background: #eaf3ff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.login-card h2 {
+  margin: 20px 0 7px;
+  font-size: 34px;
+}
+
+.login-card > p {
+  margin: 0 0 28px;
+  color: var(--muted);
+}
+
+.login-card label {
+  margin-bottom: 17px;
+}
+
+.login-card input {
+  min-height: 52px;
+  font-weight: 600;
+}
+
+.login-button {
+  width: 100%;
+  min-height: 56px;
+  margin-top: 10px;
+  padding: 14px;
+  border: 0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #fff;
+  background: linear-gradient(135deg, #1769e0, #168edc);
+  font-weight: 800;
+  box-shadow: 0 14px 28px rgba(23, 105, 224, 0.24);
+}
+
+.login-card small {
+  display: block;
+  margin-top: 27px;
+  color: #91a0b4;
+  text-align: center;
+}
+
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 54px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #607189;
+  background: transparent;
+}
+
+.login-error {
+  margin-bottom: 10px;
+  padding: 11px;
+  border-radius: 10px;
+  color: #c33737;
+  background: #fff0f0;
+  font-size: 12px;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+.mobile {
+  display: none;
+}
+
+.sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .global-search {
+    display: none;
+  }
+
+  .top-user-copy {
+    display: none;
+  }
+}
+
+@media (max-width: 1050px) {
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile {
+    display: grid;
+  }
+
+  .sidebar {
+    width: 280px;
+    transform: translateX(-105%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main,
+  .sidebar-collapsed .main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    display: block;
+    border: 0;
+    background: rgba(4, 13, 26, 0.56);
+    backdrop-filter: blur(4px);
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-showcase {
+    display: none;
+  }
+
+  .login-panel {
+    padding: 35px;
+  }
+}
+
+@media (max-width: 780px) {
+  .topbar {
+    min-height: 78px;
+    padding: 12px 16px;
+  }
+
+  .page-eyebrow,
+  .page-heading p {
+    display: none;
+  }
+
+  .page-heading h1 {
+    font-size: 19px;
+  }
+
+  .top-user,
+  .notification-button,
+  .logout-desktop {
+    display: none;
+  }
+
+  .content {
+    padding: 20px 16px;
+  }
+
+  .stats,
+  .cards,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .module-head,
+  .hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .project-row {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .progress-wrap {
+    width: 130px;
+  }
+
+  .login-panel {
+    padding: 18px;
+  }
+
+  .login-card {
+    padding: 28px 24px;
+    border-radius: 22px;
+  }
 }
 
