@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import PageFrame from '@/components/PageFrame';
-import ModuleHeader from '@/components/ModuleHeader';
 import { useData } from '@/components/DataProvider';
 import { money, uid } from '@/lib/store';
 import {
@@ -279,16 +278,18 @@ function Cotizaciones() {
 
   return (
     <>
-      <ModuleHeader
-        title="Cotizaciones"
-        subtitle="Plantilla corporativa, numeración automática y aprobación"
-        action={
-          <button type="button" className="primary" onClick={openNew}>
-            <Plus size={18} />
-            Nueva cotización
-          </button>
-        }
-      />
+     <div
+  style={{
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginBottom: '24px',
+  }}
+>
+  <button type="button" className="primary" onClick={openNew}>
+    <Plus size={18} />
+    Nueva cotización
+  </button>
+</div>
 
       <section className="stats">
         <article className="stat">
