@@ -1,10 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PageFrame from '@/components/PageFrame';
 import { useData } from '@/components/DataProvider';
 import { money, uid } from '@/lib/store';
-import { printQuotationDocument } from '@/lib/printQuotation';
 import {
   Plus,
   Trash2,
@@ -55,6 +54,7 @@ const emptyPartida = (): Partida => ({
 
 const formatDate = (value: string) => {
   if (!value) return '';
+
   const [year, month, day] = value.split('-');
   return `${day}/${month}/${year}`;
 };
@@ -74,6 +74,7 @@ function Cotizaciones() {
 
   const [showForm, setShowForm] = useState(false);
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [autoPrint, setAutoPrint] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
@@ -106,6 +107,20 @@ function Cotizaciones() {
 
   const itbis = form.requiereComprobante ? subtotal * 0.18 : 0;
   const total = subtotal + itbis;
+
+  const preview =
+    cotizaciones.find((item) => item.id === previewId) || null;
+
+  useEffect(() => {
+    if (!preview || !autoPrint) return;
+
+    const timer = window.setTimeout(() => {
+      window.print();
+      setAutoPrint(false);
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [preview, autoPrint]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -272,8 +287,20 @@ function Cotizaciones() {
     }));
   };
 
-  const preview =
-    cotizaciones.find((item) => item.id === previewId) || null;
+  const openPreview = (id: string) => {
+    setAutoPrint(false);
+    setPreviewId(id);
+  };
+
+  const openPrint = (id: string) => {
+    setAutoPrint(true);
+    setPreviewId(id);
+  };
+
+  const closePreview = () => {
+    setAutoPrint(false);
+    setPreviewId(null);
+  };
 
   return (
     <>
@@ -746,7 +773,7 @@ function Cotizaciones() {
                           className="cliente-action-btn edit"
                           title="Vista previa"
                           onClick={() =>
-                            setPreviewId(cotizacion.id)
+                            openPreview(cotizacion.id)
                           }
                         >
                           <Eye size={16} />
@@ -766,9 +793,9 @@ function Cotizaciones() {
                         <button
                           type="button"
                           className="cliente-action-btn edit"
-                          title="Abrir para imprimir"
+                          title="Imprimir cotización"
                           onClick={() =>
-                            setPreviewId(cotizacion.id)
+                            openPrint(cotizacion.id)
                           }
                         >
                           <Printer size={16} />
@@ -807,7 +834,7 @@ function Cotizaciones() {
       {preview && (
         <div
           className="cp-modal-overlay quotation-preview-overlay"
-          onClick={() => setPreviewId(null)}
+          onClick={closePreview}
         >
           <div
             className="quotation-preview-shell"
@@ -819,7 +846,7 @@ function Cotizaciones() {
               <button
                 type="button"
                 className="ghost-client-btn"
-                onClick={() => setPreviewId(null)}
+                onClick={closePreview}
               >
                 Cerrar
               </button>
@@ -827,7 +854,7 @@ function Cotizaciones() {
               <button
                 type="button"
                 className="primary"
-                onClick={printQuotationDocument}
+                onClick={() => window.print()}
               >
                 <Printer size={17} />
                 Imprimir / PDF
