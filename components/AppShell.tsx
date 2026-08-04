@@ -12,7 +12,6 @@ import {
   WalletCards,
   ReceiptText,
   CircleDollarSign,
-  HardHat,
   Landmark,
   BarChart3,
   Settings,
@@ -39,7 +38,6 @@ const menu = [
   { href: '/cobros', label: 'Cobros y avances', icon: WalletCards, group: 'Finanzas' },
   { href: '/facturas', label: 'Facturación', icon: ReceiptText, group: 'Finanzas' },
   { href: '/gastos', label: 'Gastos', icon: CircleDollarSign, group: 'Finanzas' },
-  { href: '/contratistas', label: 'Contratistas', icon: HardHat, group: 'Recursos' },
   { href: '/caja', label: 'Caja y bancos', icon: Landmark, group: 'Finanzas' },
   { href: '/reportes', label: 'Reportes', icon: BarChart3, group: 'Análisis' },
   { href: '/configuracion', label: 'Configuración', icon: Settings, group: 'Sistema' },
@@ -79,7 +77,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   const groups = useMemo(() => {
-    const order = ['General', 'Gestión', 'Operaciones', 'Finanzas', 'Recursos', 'Análisis', 'Sistema'];
+    const order = ['General', 'Gestión', 'Operaciones', 'Finanzas', 'Análisis', 'Sistema'];
+
     return order
       .map((group) => ({
         group,
