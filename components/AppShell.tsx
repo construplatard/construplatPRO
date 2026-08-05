@@ -23,8 +23,6 @@ import {
   Search,
   Bell,
   ChevronDown,
-  PanelLeftClose,
-  PanelLeftOpen,
   UserRound,
   CheckCircle2,
 } from 'lucide-react';
@@ -52,7 +50,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const headerRef = useRef<HTMLDivElement>(null);
 
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
   const [dark, setDark] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -65,20 +62,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     const savedTheme = localStorage.getItem('cp-theme');
-    const savedSidebar = localStorage.getItem('cp-sidebar');
 
     setDark(savedTheme === 'dark');
-    setCollapsed(savedSidebar === 'collapsed');
   }, [router]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? 'dark' : 'light';
     localStorage.setItem('cp-theme', dark ? 'dark' : 'light');
   }, [dark]);
-
-  useEffect(() => {
-    localStorage.setItem('cp-sidebar', collapsed ? 'collapsed' : 'expanded');
-  }, [collapsed]);
 
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
@@ -168,7 +159,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <DataProvider>
-      <div className={`shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
+      <div className="shell">
         <aside className={open ? 'sidebar open' : 'sidebar'}>
           <div className="brand">
             <div className="brand-mark">
@@ -189,15 +180,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
 
-          <button
-            className="sidebar-collapse desktop-only"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
-          >
-            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-            <span>{collapsed ? '' : 'Contraer menú'}</span>
-          </button>
-
           <nav className="sidebar-nav">
             {groups.map(({ group, items }) => (
               <div className="nav-group" key={group}>
@@ -212,7 +194,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       href={href}
                       className={active ? 'nav active' : 'nav'}
                       onClick={() => setOpen(false)}
-                      title={collapsed ? label : undefined}
+                      title={label}
                     >
                       <span className="nav-icon">
                         <Icon size={18} />
@@ -226,16 +208,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          <div className="side-profile">
-            <div className="side-avatar">JC</div>
-            <div className="side-profile-copy">
-              <b>Juan Carlos</b>
-              <span>Administrador</span>
-            </div>
-            <button className="side-logout" onClick={logout} aria-label="Cerrar sesión">
-              <LogOut size={17} />
-            </button>
-          </div>
         </aside>
 
         {open && <button className="sidebar-overlay" onClick={() => setOpen(false)} />}
@@ -652,6 +624,65 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         .logout-item .dropdown-icon {
           color: #c24b4b;
           background: rgba(194, 75, 75, 0.1);
+        }
+
+
+        .sidebar {
+          padding-bottom: 24px;
+        }
+
+        .brand {
+          min-height: 112px;
+          padding: 18px 16px 20px;
+          align-items: center;
+        }
+
+        .brand-mark {
+          width: 74px;
+          height: 74px;
+          flex: 0 0 74px;
+          padding: 7px;
+          border-radius: 21px;
+          background: #fff;
+          box-shadow: 0 14px 32px rgba(0, 0, 0, 0.18);
+        }
+
+        .brand-mark img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          border-radius: 14px;
+        }
+
+        .brand-copy b {
+          font-size: 18px;
+          letter-spacing: 0.045em;
+        }
+
+        .brand-copy span {
+          margin-top: 6px;
+          font-size: 11px;
+        }
+
+        .sidebar-nav {
+          padding-top: 8px;
+          padding-bottom: 28px;
+        }
+
+        .nav-group:first-child {
+          margin-top: 0;
+        }
+
+        @media (max-width: 980px) {
+          .brand {
+            min-height: 96px;
+          }
+
+          .brand-mark {
+            width: 62px;
+            height: 62px;
+            flex-basis: 62px;
+          }
         }
 
         @keyframes dropdownIn {
