@@ -216,39 +216,63 @@ function DashboardContent() {
 
       <section className="dashboard-kpis">
         <Link href="/proyectos" className="dashboard-kpi">
-          <div className="kpi-icon">
-            <BriefcaseBusiness size={20} />
+          <div className="kpi-head">
+            <div className="kpi-icon">
+              <BriefcaseBusiness size={20} />
+            </div>
+            <span className="kpi-badge">Activos</span>
           </div>
-          <span>Proyectos activos</span>
-          <b>{activos.length}</b>
-          <small>{proyectos.length} proyectos totales</small>
+
+          <div className="kpi-body">
+            <p>Proyectos activos</p>
+            <b>{activos.length}</b>
+            <small>{proyectos.length} proyectos totales</small>
+          </div>
         </Link>
 
         <Link href="/cobros" className="dashboard-kpi">
-          <div className="kpi-icon">
-            <WalletCards size={20} />
+          <div className="kpi-head">
+            <div className="kpi-icon">
+              <WalletCards size={20} />
+            </div>
+            <span className="kpi-badge">Cobros</span>
           </div>
-          <span>Total cobrado</span>
-          <b>{money(cobrado)}</b>
-          <small>{money(balance)} pendiente</small>
+
+          <div className="kpi-body">
+            <p>Total cobrado</p>
+            <b>{money(cobrado)}</b>
+            <small>{money(balance)} pendiente por cobrar</small>
+          </div>
         </Link>
 
         <Link href="/gastos" className="dashboard-kpi">
-          <div className="kpi-icon">
-            <ReceiptText size={20} />
+          <div className="kpi-head">
+            <div className="kpi-icon">
+              <ReceiptText size={20} />
+            </div>
+            <span className="kpi-badge">Gastos</span>
           </div>
-          <span>Total gastado</span>
-          <b>{money(gastos)}</b>
-          <small>Gastos acumulados</small>
+
+          <div className="kpi-body">
+            <p>Total gastado</p>
+            <b>{money(gastos)}</b>
+            <small>Control de egresos acumulados</small>
+          </div>
         </Link>
 
         <Link href="/reportes" className="dashboard-kpi featured">
-          <div className="kpi-icon">
-            <CircleDollarSign size={20} />
+          <div className="kpi-head">
+            <div className="kpi-icon">
+              <CircleDollarSign size={20} />
+            </div>
+            <span className="kpi-badge">Balance</span>
           </div>
-          <span>Resultado provisional</span>
-          <b>{money(resultado)}</b>
-          <small>Cobros menos gastos</small>
+
+          <div className="kpi-body">
+            <p>Resultado provisional</p>
+            <b>{money(resultado)}</b>
+            <small>Cobros menos gastos registrados</small>
+          </div>
         </Link>
       </section>
 
@@ -631,93 +655,150 @@ function DashboardContent() {
         .dashboard-kpis {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 14px;
+          gap: 16px;
         }
 
         .dashboard-kpi {
           min-width: 0;
-          padding: 20px;
-          display: block;
+          min-height: 188px;
+          padding: 22px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
           position: relative;
           overflow: hidden;
-          border: 1px solid var(--line);
-          border-radius: 22px;
+          border: 1px solid rgba(23, 105, 224, 0.12);
+          border-radius: 24px;
           color: var(--text);
           background:
-            linear-gradient(145deg, rgba(255,255,255,.045), transparent),
-            var(--card);
-          box-shadow: var(--soft-shadow);
+            radial-gradient(circle at top right, rgba(23,105,224,.08), transparent 34%),
+            linear-gradient(180deg, rgba(255,255,255,.95), rgba(248,250,255,.95));
+          box-shadow: 0 14px 32px rgba(15, 33, 62, 0.08);
           transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+        }
+
+        .dashboard-kpi::before {
+          content: '';
+          position: absolute;
+          inset: 0 auto auto 0;
+          width: 100%;
+          height: 4px;
+          background: linear-gradient(90deg, #1769e0, #21b0e8);
         }
 
         .dashboard-kpi::after {
           content: '';
-          width: 95px;
-          height: 95px;
+          width: 110px;
+          height: 110px;
           position: absolute;
-          right: -35px;
-          bottom: -45px;
+          right: -42px;
+          bottom: -48px;
           border-radius: 50%;
-          background: rgba(23,105,224,.07);
+          background: rgba(23,105,224,.06);
         }
 
         .dashboard-kpi:hover {
           transform: translateY(-4px);
-          border-color: rgba(23,105,224,.35);
-          box-shadow: 0 18px 40px rgba(23,105,224,.12);
+          border-color: rgba(23,105,224,.28);
+          box-shadow: 0 22px 40px rgba(17, 73, 138, 0.12);
         }
 
         .dashboard-kpi.featured {
           color: #fff;
           border-color: transparent;
-          background: linear-gradient(135deg, #1769e0, #168edc);
+          background:
+            radial-gradient(circle at top right, rgba(255,255,255,.14), transparent 35%),
+            linear-gradient(135deg, #0b4fc7, #1180d8 58%, #19a6e3);
+          box-shadow: 0 22px 46px rgba(23, 105, 224, 0.25);
+        }
+
+        .dashboard-kpi.featured::before {
+          background: linear-gradient(90deg, rgba(255,255,255,.85), rgba(255,255,255,.2));
+        }
+
+        .dashboard-kpi.featured::after {
+          background: rgba(255,255,255,.08);
+        }
+
+        .kpi-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          position: relative;
+          z-index: 1;
         }
 
         .kpi-icon {
-          width: 42px;
-          height: 42px;
+          width: 48px;
+          height: 48px;
           display: grid;
           place-items: center;
-          margin-bottom: 18px;
-          border-radius: 13px;
+          border-radius: 16px;
           color: var(--blue);
           background: rgba(23, 105, 224, 0.1);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
         }
 
         .featured .kpi-icon {
           color: #fff;
           background: rgba(255, 255, 255, 0.16);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
         }
 
-        .dashboard-kpi span,
-        .dashboard-kpi b,
-        .dashboard-kpi small {
+        .kpi-badge {
+          padding: 7px 11px;
+          border-radius: 999px;
+          color: var(--blue);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: .04em;
+          text-transform: uppercase;
+          background: rgba(23, 105, 224, 0.08);
+        }
+
+        .featured .kpi-badge {
+          color: #fff;
+          background: rgba(255, 255, 255, 0.16);
+        }
+
+        .kpi-body {
+          display: grid;
+          gap: 6px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .kpi-body p,
+        .kpi-body b,
+        .kpi-body small {
+          margin: 0;
           display: block;
         }
 
-        .dashboard-kpi span {
+        .kpi-body p {
           color: var(--muted);
+          font-size: 12px;
+          font-weight: 700;
+          line-height: 1.35;
+        }
+
+        .kpi-body b {
+          font-size: clamp(28px, 3vw, 36px);
+          line-height: 1.06;
+          letter-spacing: -0.03em;
+          word-break: break-word;
+        }
+
+        .kpi-body small {
+          color: #6f7f95;
           font-size: 11px;
-          font-weight: 800;
+          line-height: 1.45;
         }
 
-        .dashboard-kpi b {
-          margin-top: 7px;
-          overflow: hidden;
-          font-size: clamp(18px, 2vw, 25px);
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .dashboard-kpi small {
-          margin-top: 8px;
-          color: var(--muted);
-          font-size: 10px;
-        }
-
-        .featured span,
-        .featured small {
-          color: rgba(255, 255, 255, 0.75);
+        .featured .kpi-body p,
+        .featured .kpi-body small {
+          color: rgba(255, 255, 255, 0.82);
         }
 
         .dashboard-charts {
