@@ -131,66 +131,42 @@ function DashboardContent() {
       <section className="hero-ultra">
         <div className="hero-glow hero-glow-1" />
         <div className="hero-glow hero-glow-2" />
-        <div className="hero-grid">
-          <div className="hero-left">
-            <div className="hero-kicker">
-              <Sparkles size={15} />
-              <span>Dashboard premium</span>
-            </div>
 
-            <h2>
-              Controla tus <span>obras</span>
-              <br />
-              con un panel más <em>moderno</em>.
-            </h2>
-
-            <p>
-              Visualiza cobros, gastos, avances y proyectos en una sola vista,
-              con un diseño más llamativo, ejecutivo y fácil de leer.
-            </p>
-
-            <div className="hero-chips">
-              <span>Proyectos</span>
-              <span>Cobros</span>
-              <span>Bitácoras</span>
-              <span>Reportes</span>
-            </div>
+        <div className="hero-compact-head">
+          <div>
+            <span className="hero-title">Resumen ejecutivo</span>
+            <h2>Estado general de tus obras</h2>
           </div>
 
-          <div className="hero-right">
-            <div className="hero-main-card">
-              <div className="hero-main-top">
-                <div className="mini-pill">
-                  <TrendingUp size={14} />
-                  Estado financiero
-                </div>
-                <div className="mini-badge">Hoy</div>
-              </div>
+          <Link href="/reportes" className="hero-report-link">
+            Ver reportes
+            <ArrowUpRight size={16} />
+          </Link>
+        </div>
 
-              <div className="hero-main-value">{money(utilidad)}</div>
-              <div className="hero-main-label">Resultado provisional actual</div>
+        <div className="hero-compact-grid">
+          <div className="hero-compact-card">
+            <span>Resultado</span>
+            <b>{money(utilidad)}</b>
+            <small>Cobros menos gastos</small>
+          </div>
 
-              <div className="hero-mini-grid">
-                <div>
-                  <span>Cobrado</span>
-                  <b>{money(cobrado)}</b>
-                </div>
-                <div>
-                  <span>Pendiente</span>
-                  <b>{money(pendiente)}</b>
-                </div>
-              </div>
-            </div>
+          <div className="hero-compact-card">
+            <span>Proyectos activos</span>
+            <b>{activos.length}</b>
+            <small>{proyectos.length} proyectos totales</small>
+          </div>
 
-            <div className="hero-floating hero-floating-a">
-              <small>Avance promedio</small>
-              <strong>{avancePromedio}%</strong>
-            </div>
+          <div className="hero-compact-card">
+            <span>Avance promedio</span>
+            <b>{avancePromedio}%</b>
+            <small>Según bitácoras</small>
+          </div>
 
-            <div className="hero-floating hero-floating-b">
-              <small>Proyectos activos</small>
-              <strong>{activos.length}</strong>
-            </div>
+          <div className="hero-compact-card">
+            <span>Pendiente por cobrar</span>
+            <b>{money(pendiente)}</b>
+            <small>Balance contractual</small>
           </div>
         </div>
       </section>
@@ -403,217 +379,121 @@ function DashboardContent() {
         .hero-ultra {
           position: relative;
           overflow: hidden;
-          border-radius: 32px;
-          padding: 32px;
+          border-radius: 28px;
+          padding: 24px;
           background:
-            linear-gradient(135deg, #031226 0%, #07386b 45%, #0c85d9 100%);
-          box-shadow: 0 28px 70px rgba(8, 59, 122, 0.28);
-        }
-
-        .hero-grid {
-          position: relative;
-          z-index: 2;
-          display: grid;
-          grid-template-columns: 1.15fr 0.85fr;
-          gap: 24px;
-          align-items: center;
+            radial-gradient(circle at 92% 8%, rgba(74, 188, 255, 0.24), transparent 24%),
+            linear-gradient(135deg, #061b36 0%, #0a4478 52%, #0c7dbf 100%);
+          box-shadow: 0 22px 52px rgba(8, 59, 122, 0.22);
         }
 
         .hero-glow {
           position: absolute;
           border-radius: 50%;
-          filter: blur(10px);
-          opacity: 0.5;
+          opacity: 0.42;
+          pointer-events: none;
         }
 
         .hero-glow-1 {
-          width: 320px;
-          height: 320px;
-          right: -80px;
-          top: -70px;
-          background: rgba(120, 220, 255, 0.28);
+          width: 240px;
+          height: 240px;
+          right: -90px;
+          top: -100px;
+          background: rgba(145, 225, 255, 0.18);
         }
 
         .hero-glow-2 {
-          width: 280px;
-          height: 280px;
+          width: 180px;
+          height: 180px;
           left: -90px;
-          bottom: -130px;
-          background: rgba(57, 123, 255, 0.2);
+          bottom: -120px;
+          background: rgba(75, 118, 255, 0.16);
         }
 
-        .hero-kicker {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 9px 14px;
-          border-radius: 999px;
-          color: #d8eeff;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          font-size: 12px;
-          font-weight: 800;
-          backdrop-filter: blur(8px);
-        }
-
-        .hero-left h2 {
-          margin: 18px 0 12px;
-          color: #fff;
-          font-size: clamp(38px, 5vw, 62px);
-          line-height: 0.98;
-          letter-spacing: -0.04em;
-        }
-
-        .hero-left h2 span {
-          color: #79d7ff;
-        }
-
-        .hero-left h2 em {
-          font-style: normal;
-          color: #c3edff;
-        }
-
-        .hero-left p {
-          margin: 0;
-          max-width: 720px;
-          color: rgba(255, 255, 255, 0.84);
-          font-size: 16px;
-          line-height: 1.7;
-        }
-
-        .hero-chips {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          margin-top: 20px;
-        }
-
-        .hero-chips span {
-          padding: 9px 14px;
-          border-radius: 999px;
-          font-size: 12px;
-          font-weight: 800;
-          color: #fff;
-          background: rgba(255, 255, 255, 0.12);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        .hero-right {
+        .hero-compact-head,
+        .hero-compact-grid {
           position: relative;
-          min-height: 280px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          z-index: 1;
         }
 
-        .hero-main-card {
-          width: 100%;
-          max-width: 360px;
-          padding: 22px;
-          border-radius: 28px;
-          background: rgba(255, 255, 255, 0.14);
-          border: 1px solid rgba(255, 255, 255, 0.18);
-          backdrop-filter: blur(16px);
-          box-shadow: 0 24px 50px rgba(0, 0, 0, 0.16);
-        }
-
-        .hero-main-top {
+        .hero-compact-head {
           display: flex;
+          align-items: flex-start;
           justify-content: space-between;
-          align-items: center;
-          gap: 10px;
+          gap: 16px;
         }
 
-        .mini-pill,
-        .mini-badge {
+        .hero-title {
+          color: #a8dcff;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .hero-compact-head h2 {
+          margin: 7px 0 0;
+          color: #ffffff;
+          font-size: clamp(26px, 3vw, 38px);
+          line-height: 1.05;
+          letter-spacing: -0.03em;
+        }
+
+        .hero-report-link {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 8px 12px;
-          border-radius: 999px;
-          font-size: 11px;
-          font-weight: 800;
-          color: #fff;
-          background: rgba(255, 255, 255, 0.14);
-        }
-
-        .hero-main-value {
-          margin-top: 18px;
-          color: #fff;
-          font-size: clamp(28px, 4vw, 46px);
-          line-height: 1;
+          padding: 10px 13px;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 12px;
+          color: white;
+          background: rgba(255,255,255,.10);
+          font-size: 12px;
           font-weight: 900;
+          white-space: nowrap;
         }
 
-        .hero-main-label {
-          margin-top: 10px;
-          color: rgba(255, 255, 255, 0.78);
-          font-size: 14px;
-        }
-
-        .hero-mini-grid {
+        .hero-compact-grid {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 12px;
-          margin-top: 18px;
+          margin-top: 20px;
         }
 
-        .hero-mini-grid > div {
-          padding: 14px;
+        .hero-compact-card {
+          min-width: 0;
+          padding: 15px;
+          border: 1px solid rgba(255,255,255,.13);
           border-radius: 18px;
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(255,255,255,.09);
+          backdrop-filter: blur(10px);
         }
 
-        .hero-mini-grid span,
-        .hero-mini-grid b {
+        .hero-compact-card span,
+        .hero-compact-card b,
+        .hero-compact-card small {
           display: block;
         }
 
-        .hero-mini-grid span {
-          color: rgba(255, 255, 255, 0.72);
-          font-size: 11px;
-        }
-
-        .hero-mini-grid b {
-          margin-top: 6px;
-          color: #fff;
-          font-size: 16px;
-          overflow-wrap: anywhere;
-        }
-
-        .hero-floating {
-          position: absolute;
-          padding: 12px 14px;
-          border-radius: 18px;
-          background: rgba(255, 255, 255, 0.92);
-          box-shadow: 0 18px 35px rgba(0, 0, 0, 0.16);
-        }
-
-        .hero-floating small,
-        .hero-floating strong {
-          display: block;
-        }
-
-        .hero-floating small {
-          color: #57708e;
+        .hero-compact-card span {
+          color: rgba(255,255,255,.74);
           font-size: 11px;
           font-weight: 700;
         }
 
-        .hero-floating strong {
-          margin-top: 4px;
-          color: #0b2648;
+        .hero-compact-card b {
+          margin-top: 8px;
+          color: #ffffff;
           font-size: 22px;
+          line-height: 1.1;
+          overflow-wrap: anywhere;
         }
 
-        .hero-floating-a {
-          left: 0;
-          bottom: 16px;
-        }
-
-        .hero-floating-b {
-          right: 6px;
-          top: 10px;
+        .hero-compact-card small {
+          margin-top: 6px;
+          color: rgba(255,255,255,.62);
+          font-size: 10px;
+          line-height: 1.35;
         }
 
         .stats-grid {
@@ -987,24 +867,12 @@ function DashboardContent() {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
-          .content-grid,
-          .hero-grid {
+          .content-grid {
             grid-template-columns: 1fr;
           }
 
-          .hero-right {
-            min-height: auto;
-            padding-top: 18px;
-          }
-
-          .hero-floating-a,
-          .hero-floating-b {
-            position: static;
-          }
-
-          .hero-right {
-            display: grid;
-            gap: 14px;
+          .hero-compact-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
         }
 
@@ -1014,8 +882,13 @@ function DashboardContent() {
             border-radius: 24px;
           }
 
-          .hero-left h2 {
-            font-size: 38px;
+          .hero-compact-head {
+            align-items: stretch;
+            flex-direction: column;
+          }
+
+          .hero-report-link {
+            width: fit-content;
           }
 
           .stats-grid,
@@ -1043,6 +916,10 @@ function DashboardContent() {
 
           .panel-head h3 {
             font-size: 22px;
+          }
+
+          .hero-compact-grid {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
