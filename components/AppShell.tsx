@@ -216,14 +216,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <header className="topbar">
             <div className="topbar-left">
               <button
-                className="icon mobile"
+                className="icon mobile mobile-menu-button"
                 onClick={() => setOpen(true)}
                 aria-label="Abrir menú"
               >
                 <Menu size={20} />
               </button>
 
-              <div className="page-heading">
+              <div className="mobile mobile-top-brand">
+                <img src="/logo-construplata.jpg" alt="CONSTRUPLATA" />
+                <div>
+                  <b>{current?.label || 'CONSTRUPLATA'}</b>
+                  <span>CONSTRUPLATA PRO</span>
+                </div>
+              </div>
+
+              <div className="page-heading desktop-page-heading">
                 <span className="page-eyebrow">Centro de control</span>
                 <h1>{current?.label || 'CONSTRUPLATA'}</h1>
                 <p>Gestión administrativa, financiera y operativa</p>
@@ -682,6 +690,256 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             width: 62px;
             height: 62px;
             flex-basis: 62px;
+          }
+        }
+
+
+        .mobile-top-brand,
+        .mobile-sidebar-footer {
+          display: none;
+        }
+
+        @media (max-width: 768px) {
+          .shell {
+            display: block;
+            width: 100%;
+            min-height: 100vh;
+          }
+
+          .sidebar {
+            width: min(88vw, 320px) !important;
+            padding: 14px 12px 16px;
+            transform: translateX(-105%);
+            transition: transform 0.28s ease;
+            overflow-y: auto;
+            box-shadow: 20px 0 60px rgba(0, 0, 0, 0.34);
+          }
+
+          .sidebar.open {
+            transform: translateX(0);
+          }
+
+          .main {
+            width: 100% !important;
+            margin-left: 0 !important;
+          }
+
+          .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 35;
+            border: 0;
+            background: rgba(2, 12, 25, 0.62);
+            backdrop-filter: blur(3px);
+          }
+
+          .brand {
+            min-height: 92px;
+            padding: 10px 8px 16px;
+          }
+
+          .brand-mark {
+            width: 66px;
+            height: 66px;
+            flex-basis: 66px;
+          }
+
+          .brand-copy b {
+            font-size: 17px;
+          }
+
+          .brand-copy span {
+            font-size: 10px;
+          }
+
+          .sidebar-close {
+            margin-left: auto;
+          }
+
+          .sidebar-nav {
+            padding: 4px 0 18px;
+            overflow: visible;
+          }
+
+          .nav-group {
+            gap: 4px;
+          }
+
+          .nav-group-label {
+            padding: 7px 12px 4px;
+          }
+
+          .nav {
+            min-height: 50px;
+            padding: 12px 13px;
+            font-size: 14px;
+          }
+
+          .nav-icon {
+            width: 27px;
+          }
+
+          .mobile-sidebar-footer {
+            margin-top: 10px;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: 42px 1fr 38px;
+            gap: 10px;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.06);
+          }
+
+          .mobile-sidebar-footer b,
+          .mobile-sidebar-footer span {
+            display: block;
+          }
+
+          .mobile-sidebar-footer b {
+            font-size: 12px;
+          }
+
+          .mobile-sidebar-footer span {
+            margin-top: 3px;
+            color: #91aac4;
+            font-size: 10px;
+          }
+
+          .mobile-sidebar-footer button {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border: 0;
+            border-radius: 11px;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+          }
+
+          .topbar {
+            min-height: 68px;
+            padding: 9px 12px;
+            gap: 10px;
+          }
+
+          .topbar-left {
+            min-width: 0;
+            flex: 1;
+            gap: 9px;
+          }
+
+          .desktop-page-heading {
+            display: none;
+          }
+
+          .mobile-top-brand {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+          }
+
+          .mobile-top-brand img {
+            width: 40px;
+            height: 40px;
+            padding: 3px;
+            object-fit: contain;
+            border-radius: 11px;
+            background: #fff;
+          }
+
+          .mobile-top-brand div {
+            min-width: 0;
+          }
+
+          .mobile-top-brand b,
+          .mobile-top-brand span {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .mobile-top-brand b {
+            max-width: 145px;
+            color: var(--text);
+            font-size: 14px;
+          }
+
+          .mobile-top-brand span {
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 8px;
+            letter-spacing: 0.08em;
+          }
+
+          .mobile-menu-button {
+            width: 42px;
+            height: 42px;
+            border-radius: 13px;
+          }
+
+          .top-actions {
+            gap: 6px;
+          }
+
+          .search-control-wrap,
+          .logout-desktop,
+          .top-user-copy,
+          .user-chevron {
+            display: none !important;
+          }
+
+          .top-user-button {
+            min-height: 42px;
+            padding: 3px;
+            border-radius: 13px;
+          }
+
+          .top-user-button .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 11px;
+            font-size: 11px;
+          }
+
+          .top-action-button {
+            width: 42px;
+            height: 42px;
+            border-radius: 13px;
+          }
+
+          .content {
+            min-height: calc(100vh - 68px);
+            padding: 14px 12px 24px;
+          }
+
+          .page-content {
+            max-width: 100%;
+          }
+
+          .top-dropdown {
+            position: fixed;
+            top: 72px;
+            right: 10px;
+            left: 10px;
+            width: auto !important;
+            max-height: calc(100vh - 90px);
+            overflow-y: auto;
+          }
+        }
+
+        @media (min-width: 769px) {
+          .sidebar {
+            transform: none !important;
+          }
+
+          .mobile-top-brand,
+          .mobile-sidebar-footer,
+          .mobile-menu-button,
+          .sidebar-close {
+            display: none !important;
           }
         }
 
