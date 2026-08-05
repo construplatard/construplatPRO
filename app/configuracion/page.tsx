@@ -517,18 +517,6 @@ function Configuraciones() {
 
   return (
     <>
-      <div className="settings-top">
-        <div className="settings-banner">
-          <SlidersHorizontal size={22} />
-          <div>
-            <b>Centro de configuración del sistema</b>
-            <span>
-              Empresa, usuarios, roles, categorías y seguridad.
-            </span>
-          </div>
-        </div>
-      </div>
-
       <section className="settings-tabs">
         <button
           className={tab === 'empresa' ? 'active' : ''}
@@ -1712,61 +1700,131 @@ function Configuraciones() {
         }
 
 
-        html[data-theme='dark'] .settings-panel,
-        html[data-theme='dark'] .login-card,
-        html[data-theme='dark'] .cp-modal {
+        :global(html[data-theme='dark']) .settings-panel,
+        :global(html[data-theme='dark']) .login-card,
+        :global(html[data-theme='dark']) .cp-modal {
           color: var(--text);
           border-color: var(--line);
           background: var(--card);
         }
 
-        html[data-theme='dark'] .settings-tabs button,
-        html[data-theme='dark'] .role-card,
-        html[data-theme='dark'] .switch-row,
-        html[data-theme='dark'] input,
-        html[data-theme='dark'] select,
-        html[data-theme='dark'] .check,
-        html[data-theme='dark'] .ghost-client-btn {
+        :global(html[data-theme='dark']) .settings-tabs button,
+        :global(html[data-theme='dark']) .role-card,
+        :global(html[data-theme='dark']) .switch-row,
+        :global(html[data-theme='dark']) input,
+        :global(html[data-theme='dark']) select,
+        :global(html[data-theme='dark']) .check,
+        :global(html[data-theme='dark']) .ghost-client-btn {
           color: var(--text);
           border-color: var(--line);
           background: rgba(255, 255, 255, 0.045);
         }
 
-        html[data-theme='dark'] .settings-tabs button.active,
-        html[data-theme='dark'] .check.active,
-        html[data-theme='dark'] .switch-row.active {
+        :global(html[data-theme='dark']) .settings-tabs button.active,
+        :global(html[data-theme='dark']) .check.active,
+        :global(html[data-theme='dark']) .switch-row.active {
           color: #ffffff;
           border-color: rgba(73, 158, 255, 0.5);
           background: rgba(23, 105, 224, 0.3);
         }
 
-        html[data-theme='dark'] h3,
-        html[data-theme='dark'] label,
-        html[data-theme='dark'] td {
+        :global(html[data-theme='dark']) h3,
+        :global(html[data-theme='dark']) label,
+        :global(html[data-theme='dark']) td {
           color: var(--text);
         }
 
-        html[data-theme='dark'] th,
-        html[data-theme='dark'] .note,
-        html[data-theme='dark'] .empty,
-        html[data-theme='dark'] .role-card p {
+        :global(html[data-theme='dark']) th,
+        :global(html[data-theme='dark']) .note,
+        :global(html[data-theme='dark']) .empty,
+        :global(html[data-theme='dark']) .role-card p {
           color: var(--muted);
         }
 
-        html[data-theme='dark'] th,
-        html[data-theme='dark'] td {
+        :global(html[data-theme='dark']) th,
+        :global(html[data-theme='dark']) td {
           border-bottom-color: var(--line);
         }
 
-        html[data-theme='dark'] .table-wrap {
+        :global(html[data-theme='dark']) .table-wrap {
           border-radius: 16px;
           background: rgba(255, 255, 255, 0.025);
         }
 
-        html[data-theme='light'] .settings-panel,
-        html:not([data-theme='dark']) .settings-panel {
+        :global(html[data-theme='light']) .settings-panel,
+        :global(html:not([data-theme='dark'])) .settings-panel {
           color: #153853;
           background: #ffffff;
+        }
+
+        :global(html[data-theme='dark']) .settings-panel {
+          background: #0e1c30 !important;
+          color: #edf5ff !important;
+          border-color: rgba(148, 172, 202, 0.16) !important;
+          box-shadow: 0 20px 55px rgba(0, 0, 0, 0.22);
+        }
+
+        :global(html[data-theme='dark']) .settings-tabs button {
+          background: #13243a !important;
+          color: #b7c8da !important;
+          border-color: rgba(148, 172, 202, 0.16) !important;
+        }
+
+        :global(html[data-theme='dark']) .settings-tabs button.active {
+          background: linear-gradient(135deg, #1769e0, #1f8ff0) !important;
+          color: #ffffff !important;
+          border-color: transparent !important;
+        }
+
+        :global(html[data-theme='dark']) input,
+        :global(html[data-theme='dark']) select {
+          background: #0a1728 !important;
+          color: #edf5ff !important;
+          border-color: rgba(148, 172, 202, 0.18) !important;
+        }
+
+        :global(html[data-theme='dark']) input::placeholder {
+          color: #7187a1 !important;
+        }
+
+        :global(html[data-theme='dark']) .role-card,
+        :global(html[data-theme='dark']) .switch-row,
+        :global(html[data-theme='dark']) .check,
+        :global(html[data-theme='dark']) .cp-modal,
+        :global(html[data-theme='dark']) .ghost-client-btn {
+          background: #101f34 !important;
+          color: #edf5ff !important;
+          border-color: rgba(148, 172, 202, 0.16) !important;
+        }
+
+        :global(html[data-theme='dark']) .table-wrap {
+          background: #0a1728 !important;
+        }
+
+        :global(html[data-theme='dark']) table,
+        :global(html[data-theme='dark']) tbody,
+        :global(html[data-theme='dark']) tr,
+        :global(html[data-theme='dark']) td,
+        :global(html[data-theme='dark']) th {
+          background: transparent !important;
+          color: #dce8f5 !important;
+        }
+
+        :global(html[data-theme='dark']) h3,
+        :global(html[data-theme='dark']) label {
+          color: #edf5ff !important;
+        }
+
+        :global(html[data-theme='dark']) .note,
+        :global(html[data-theme='dark']) .empty,
+        :global(html[data-theme='dark']) .role-card p {
+          color: #96abc2 !important;
+        }
+
+        :global(html[data-theme='light']) .settings-panel,
+        :global(html:not([data-theme='dark'])) .settings-panel {
+          background: #ffffff !important;
+          color: #153853 !important;
         }
 
         .audit-table table {
