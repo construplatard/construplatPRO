@@ -1,425 +1,428 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  ArrowRight,
-  Eye,
-  EyeOff,
-  ShieldCheck,
-} from 'lucide-react';
+import { Eye, EyeOff, LogIn, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-const frases = [
-  {
-    linea1: 'Planifica con',
-    linea2: 'precisión.',
-  },
-  {
-    linea1: 'Controla cada',
-    linea2: 'obra.',
-  },
-  {
-    linea1: 'Crece con',
-    linea2: 'confianza.',
-  },
-];
+type RoleJoin = { nombre?: string } | { nombre?: string }[] | null;
 
-export default function Login() {
+export default function LoginPage() {
   const router = useRouter();
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [show, setShow] = useState(false);
-  const [error, setError] = useState('');
-  const [fraseActual, setFraseActual] = useState(0);
-  const [visible, setVisible] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const intervalo = window.setInterval(() => {
-      setVisible(false);
-
-      window.setTimeout(() => {
-        setFraseActual(
-          (actual) => (actual + 1) % frases.length
-        );
-
-        setVisible(true);
-      }, 450);
-    }, 10000);
-
-    return () => {
-      window.clearInterval(intervalo);
-    };
-  }, []);
-
-  useEffect(() => {
-    const revisarSesion = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        localStorage.setItem('cp-auth', '1');
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
         router.replace('/dashboard');
       }
-    };
-
-    revisarSesion();
+    });
   }, [router]);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setLoading(true);
+    setMessage('');
 
-    const correoIngresado = email.trim().toLowerCase();
+    const correo = email.trim().toLowerCase();
+    const clave = password;
 
-    if (!correoIngresado || !password) {
-      setError('Completa el correo y la contraseña.');
+    if (!correo || !clave) {
+      setMessage('Completa el correo y la contraseña.');
       setLoading(false);
       return;
     }
 
-    const { data, error: authError } =
-      await supabase.auth.signInWithPassword({
-        email: correoIngresado,
-        password,
-      });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: correo,
+      password: clave,
+    });
 
-    if (authError || !data.user) {
-      setError('Correo o contraseña incorrectos.');
-      setLoading(false);
-      return;
-    }
+    const projectRef =
+      process.env.NEXT_PUBLIC_SUPABASE_URL
+        ?.replace('https://', '')
+        .split('.')[0] || 'sin-project-ref';
 
-    const { data: perfil, error: perfilError } =
-      await supabase
-        .from('profiles')
-        .select(
-          'id,nombre,correo,rol,activo,proyectos,modulos,acciones'
-        )
-        .eq('id', data.user.id)
-        .single();
-
-    if (perfilError || !perfil) {
-      await supabase.auth.signOut();
-      setError('No se encontró el perfil de este usuario.');
-      setLoading(false);
-      return;
-    }
-
-    if (!perfil.activo) {
-      await supabase.auth.signOut();
-      setError(
-        'Este usuario está desactivado. Contacta al administrador.'
+    if (error || !data.user) {
+      setMessage(
+        `${error?.message || 'No se pudo iniciar sesión'} | Proyecto conectado: ${projectRef}`
       );
       setLoading(false);
       return;
     }
 
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('id,nombre,correo,activo,es_super_admin,roles(nombre)')
+      .eq('id', data.user.id)
+      .maybeSingle();
+
+    if (profile?.activo === false) {
+      await supabase.auth.signOut();
+      setMessage('Este usuario está desactivado.');
+      setLoading(false);
+      return;
+    }
+
+    const roles = profile?.roles as RoleJoin;
+    const roleName = Array.isArray(roles)
+      ? roles[0]?.nombre
+      : roles?.nombre;
+
     localStorage.setItem('cp-auth', '1');
     localStorage.setItem(
       'cp-user',
       JSON.stringify({
-        id: perfil.id,
-        nombre: perfil.nombre,
-        correo: perfil.correo,
-        rol: perfil.rol,
-        proyectos: perfil.proyectos || [],
-        modulos: perfil.modulos || [],
-        acciones: perfil.acciones || [],
+        id: data.user.id,
+        nombre:
+          profile?.nombre ||
+          data.user.user_metadata?.nombre ||
+          data.user.email?.split('@')[0] ||
+          'Usuario',
+        correo: profile?.correo || data.user.email || '',
+        rol:
+          roleName ||
+          (profile?.es_super_admin ? 'Administrador' : 'Usuario'),
       })
     );
 
-    router.push('/dashboard');
+    router.replace('/dashboard');
   }
 
-  const frase = frases[fraseActual];
-
   return (
-    <div className="login-page">
-      <section className="login-showcase">
-        <div className="showcase-brand">
-          <img
-            src="/logo-construplata.jpg"
-            alt="CONSTRUPLATA"
-          />
-
-          <span>CONSTRUPLATA</span>
+    <main className="login-page">
+      <section className="brand-panel">
+        <div className="brand-wrap">
+          <img src="/logo-construplata.jpg" alt="CONSTRUPLATA" />
+          <div>
+            <strong>CONSTRUPLATA</strong>
+            <span>Control profesional de obras</span>
+          </div>
         </div>
 
-        <div className="showcase-copy">
-          <span className="login-kicker">
-            ERP DE CONSTRUCCIÓN
-          </span>
-
-          <div
-            className={
-              visible
-                ? 'rotating-message visible'
-                : 'rotating-message'
-            }
-          >
-            <h1>
-              {frase.linea1}
-              <br />
-
-              <em>{frase.linea2}</em>
-            </h1>
-          </div>
-
+        <div className="brand-copy">
+          <span>ERP DE CONSTRUCCIÓN</span>
+          <h1>
+            Construye con control.
+            <em> Decide con datos.</em>
+          </h1>
           <p>
-            Cotizaciones, proyectos, bitácoras y
-            finanzas en un solo centro de control.
+            Proyectos, cotizaciones, finanzas y seguimiento de obra
+            sincronizados desde cualquier dispositivo.
           </p>
-
-          <div className="phrase-indicators">
-            {frases.map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                className={
-                  index === fraseActual
-                    ? 'phrase-dot active'
-                    : 'phrase-dot'
-                }
-                onClick={() => {
-                  setVisible(false);
-
-                  window.setTimeout(() => {
-                    setFraseActual(index);
-                    setVisible(true);
-                  }, 250);
-                }}
-                aria-label={`Mostrar frase ${
-                  index + 1
-                }`}
-              />
-            ))}
-          </div>
-
-          <div className="showcase-chips">
-            <span>Proyectos</span>
-            <span>Finanzas</span>
-            <span>Bitácoras</span>
-          </div>
-        </div>
-
-        <div className="showcase-foot">
-          Gestión inteligente para construir mejor.
         </div>
       </section>
 
-      <section className="login-panel">
-        <form
-          className="login-card"
-          onSubmit={submit}
-        >
-          <div className="secure-badge">
-            <ShieldCheck size={16} />
-            Acceso seguro
+      <section className="form-panel">
+        <form className="login-card" onSubmit={handleSubmit}>
+          <div className="secure">
+            <ShieldCheck size={17} />
+            Acceso seguro con Supabase
           </div>
 
           <h2>Bienvenido</h2>
-
-          <p>
-            Ingresa con el correo y la contraseña asignados.
-          </p>
+          <p>Ingresa con el usuario creado en Authentication.</p>
 
           <label>
             Correo electrónico
-
             <input
               type="email"
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setError('');
-              }}
-              placeholder="Ingrese su correo electrónico"
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="admin@construplata.com"
               autoComplete="email"
             />
           </label>
 
           <label>
             Contraseña
-
-            <div className="password-field">
+            <div className="password-wrap">
               <input
-                type={show ? 'text' : 'password'}
+                type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError('');
-                }}
+                onChange={(event) => setPassword(event.target.value)}
                 placeholder="••••••••"
                 autoComplete="current-password"
               />
-
               <button
                 type="button"
-                className="password-toggle"
-                onClick={() => setShow(!show)}
-                title={
-                  show
-                    ? 'Ocultar contraseña'
-                    : 'Ver contraseña'
-                }
+                onClick={() => setShowPassword((value) => !value)}
                 aria-label={
-                  show
-                    ? 'Ocultar contraseña'
-                    : 'Ver contraseña'
+                  showPassword ? 'Ocultar contraseña' : 'Ver contraseña'
                 }
               >
-                {show ? (
-                  <EyeOff size={20} />
-                ) : (
-                  <Eye size={20} />
-                )}
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
           </label>
 
-          {error && (
-            <div className="login-error">
-              {error}
-            </div>
-          )}
+          {message && <div className="message">{message}</div>}
 
-          <button
-            className="login-button"
-            type="submit"
-            disabled={loading}
-          >
+          <button className="submit" type="submit" disabled={loading}>
             {loading ? 'Validando...' : 'Entrar al sistema'}
-            <ArrowRight size={20} />
+            <LogIn size={19} />
           </button>
 
           <small>
-            © 2026 CONSTRUPLATA SRL · República
-            Dominicana
+            El mensaje de error mostrará el proyecto Supabase conectado.
           </small>
         </form>
       </section>
 
-      <style jsx global>{`
-        .showcase-brand {
+      <style jsx>{`
+        .login-page {
+          min-height: 100dvh;
+          display: grid;
+          grid-template-columns: 1.15fr 0.85fr;
+          background: #f2f5f7;
+        }
+
+        .brand-panel {
+          padding: 46px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          color: white;
+          background:
+            linear-gradient(145deg, rgba(5, 25, 31, 0.96), rgba(13, 67, 72, 0.9)),
+            url('/construction-bg.jpg') center/cover;
+        }
+
+        .brand-wrap {
           display: flex;
           align-items: center;
-          gap: 22px;
+          gap: 18px;
         }
 
-        .showcase-brand img {
-          width: 132px !important;
-          height: 132px !important;
-          padding: 10px;
+        .brand-wrap img {
+          width: 112px;
+          height: 112px;
           object-fit: contain;
-          border-radius: 28px !important;
-          background: #ffffff;
-          box-shadow: 0 22px 50px rgba(0, 0, 0, 0.24);
+          padding: 8px;
+          border-radius: 24px;
+          background: white;
         }
 
-        .showcase-brand span {
-          font-size: 25px !important;
+        .brand-wrap strong,
+        .brand-wrap span {
+          display: block;
+        }
+
+        .brand-wrap strong {
+          font-size: 24px;
+          letter-spacing: 0.04em;
+        }
+
+        .brand-wrap span {
+          margin-top: 5px;
+          opacity: 0.76;
+        }
+
+        .brand-copy {
+          max-width: 660px;
+          margin: auto 0;
+        }
+
+        .brand-copy > span {
+          font-size: 12px;
           font-weight: 900;
-          letter-spacing: 0.055em;
+          letter-spacing: 0.17em;
+          opacity: 0.75;
         }
 
-        @media (max-width: 900px) {
-          .showcase-brand img {
-            width: 100px !important;
-            height: 100px !important;
-            border-radius: 23px !important;
-          }
-
-          .showcase-brand span {
-            font-size: 21px !important;
-          }
+        .brand-copy h1 {
+          margin: 18px 0;
+          font-size: clamp(44px, 5vw, 74px);
+          line-height: 0.98;
         }
 
-        @media (max-width: 620px) {
-          .showcase-brand {
-            gap: 14px;
-          }
-
-          .showcase-brand img {
-            width: 82px !important;
-            height: 82px !important;
-            padding: 7px;
-            border-radius: 20px !important;
-          }
-
-          .showcase-brand span {
-            font-size: 18px !important;
-          }
+        .brand-copy em {
+          display: block;
+          color: #9dd7c4;
+          font-style: normal;
         }
 
-        @media (max-width: 768px) {
+        .brand-copy p {
+          max-width: 560px;
+          font-size: 18px;
+          line-height: 1.6;
+          opacity: 0.8;
+        }
+
+        .form-panel {
+          padding: 28px;
+          display: grid;
+          place-items: center;
+        }
+
+        .login-card {
+          width: min(100%, 440px);
+          padding: 36px;
+          border: 1px solid #dde5e7;
+          border-radius: 28px;
+          background: white;
+          box-shadow: 0 24px 60px rgba(13, 40, 44, 0.12);
+        }
+
+        .secure {
+          width: fit-content;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          padding: 8px 11px;
+          border-radius: 999px;
+          color: #0a6b59;
+          background: #e8f7f1;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        h2 {
+          margin: 24px 0 6px;
+          color: #102f33;
+          font-size: 34px;
+        }
+
+        .login-card > p {
+          margin: 0 0 26px;
+          color: #6b7d80;
+        }
+
+        label {
+          display: grid;
+          gap: 8px;
+          margin-top: 18px;
+          color: #243f43;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        input {
+          width: 100%;
+          min-height: 52px;
+          box-sizing: border-box;
+          padding: 0 14px;
+          border: 1px solid #cedbdd;
+          border-radius: 14px;
+          outline: none;
+          font-size: 16px;
+        }
+
+        input:focus {
+          border-color: #168b75;
+          box-shadow: 0 0 0 4px rgba(22, 139, 117, 0.11);
+        }
+
+        .password-wrap {
+          position: relative;
+        }
+
+        .password-wrap button {
+          position: absolute;
+          top: 50%;
+          right: 11px;
+          transform: translateY(-50%);
+          display: grid;
+          place-items: center;
+          border: 0;
+          background: transparent;
+          color: #607679;
+          cursor: pointer;
+        }
+
+        .message {
+          margin-top: 18px;
+          padding: 12px 13px;
+          border-radius: 12px;
+          color: #8f2626;
+          background: #fff0f0;
+          font-size: 12px;
+          line-height: 1.5;
+          overflow-wrap: anywhere;
+        }
+
+        .submit {
+          width: 100%;
+          min-height: 54px;
+          margin-top: 22px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 9px;
+          border: 0;
+          border-radius: 15px;
+          color: white;
+          background: #0e7866;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .submit:disabled {
+          opacity: 0.6;
+          cursor: wait;
+        }
+
+        small {
+          display: block;
+          margin-top: 16px;
+          color: #7a8c8f;
+          text-align: center;
+          line-height: 1.45;
+        }
+
+        @media (max-width: 800px) {
           .login-page {
-            min-height: 100dvh;
-            display: block !important;
+            display: block;
+            background: #eef3f4;
           }
 
-          .login-showcase {
-            min-height: 230px !important;
-            padding: 22px 20px 28px !important;
+          .brand-panel {
+            min-height: 220px;
+            padding: 22px 18px 48px;
+            align-items: center;
+            justify-content: flex-start;
           }
 
-          .showcase-copy {
-            display: none !important;
-          }
-
-          .showcase-foot {
-            display: none !important;
-          }
-
-          .showcase-brand {
-            justify-content: center;
+          .brand-wrap {
             flex-direction: column;
             gap: 10px;
             text-align: center;
           }
 
-          .showcase-brand img {
-            width: 112px !important;
-            height: 112px !important;
+          .brand-wrap img {
+            width: 108px;
+            height: 108px;
           }
 
-          .showcase-brand span {
-            font-size: 21px !important;
+          .brand-wrap strong {
+            font-size: 21px;
           }
 
-          .login-panel {
-            min-height: calc(100dvh - 230px) !important;
-            padding: 0 14px 28px !important;
-            align-items: flex-start !important;
+          .brand-wrap span,
+          .brand-copy {
+            display: none;
+          }
+
+          .form-panel {
+            margin-top: -32px;
+            padding: 0 14px 28px;
+            position: relative;
           }
 
           .login-card {
-            width: 100% !important;
-            max-width: 460px !important;
-            margin: -22px auto 0 !important;
-            padding: 26px 20px !important;
-            border-radius: 24px !important;
+            padding: 26px 20px;
+            border-radius: 24px;
           }
 
-          .login-card h2 {
-            font-size: 25px !important;
-          }
-
-          .login-card input {
-            min-height: 50px;
-            font-size: 16px;
-          }
-
-          .login-button {
-            min-height: 52px;
+          h2 {
+            font-size: 28px;
           }
         }
-
       `}</style>
-    </div>
+    </main>
   );
 }
