@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PageFrame from '@/components/PageFrame';
 import { useData } from '@/components/DataProvider';
 import { money, today, uid } from '@/lib/store';
+import { supabase } from '@/lib/supabase';
 import {
   Eye,
   FileText,
@@ -13,6 +14,8 @@ import {
   Printer,
   ReceiptText,
   Save,
+  ShieldCheck,
+  LockKeyhole,
   WalletCards,
   X,
 } from 'lucide-react';
@@ -48,6 +51,41 @@ type ProyectoGasto = {
   nombre: string;
   clienteId: string;
   monto: number;
+};
+
+type PerfilActual = {
+  nombre: string;
+  correo: string;
+  activo: boolean;
+  es_super_admin: boolean;
+  roles:
+    | { nombre?: string }
+    | { nombre?: string }[]
+    | null;
+};
+
+const obtenerNombreRol = (roles: PerfilActual['roles']) => {
+  if (Array.isArray(roles)) {
+    return String(roles[0]?.nombre || '');
+  }
+
+  return String(roles?.nombre || '');
+};
+
+const esRolAdministrador = (
+  roleName: string,
+  isSuperAdmin: boolean
+) => {
+  if (isSuperAdmin) return true;
+
+  const role = normalizar(roleName);
+
+  return (
+    role === 'adm' ||
+    role === 'admin' ||
+    role === 'administrador' ||
+    role === 'administrator'
+  );
 };
 
 const categorias = [
@@ -90,6 +128,67 @@ export default function Page() {
 
 function Gastos() {
   const { data, setData } = useData();
+
+  const [checkingRole, setCheckingRole] = useState(true);
+  const [canManageExpenses, setCanManageExpenses] = useState(false);
+  const [currentRole, setCurrentRole] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    const cargarPermiso = async () => {
+      setCheckingRole(true);
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        if (active) {
+          setCanManageExpenses(false);
+          setCurrentRole('');
+          setCheckingRole(false);
+        }
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select(
+          'nombre,correo,activo,es_super_admin,roles(nombre)'
+        )
+        .eq('id', session.user.id)
+        .single();
+
+      if (!active) return;
+
+      if (error || !profile || profile.activo === false) {
+        setCanManageExpenses(false);
+        setCurrentRole('');
+        setCheckingRole(false);
+        return;
+      }
+
+      const roleName = obtenerNombreRol(
+        (profile as PerfilActual).roles
+      );
+
+      setCurrentRole(roleName);
+      setCanManageExpenses(
+        esRolAdministrador(
+          roleName,
+          (profile as PerfilActual).es_super_admin === true
+        )
+      );
+      setCheckingRole(false);
+    };
+
+    cargarPermiso();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const movimientos = data.movimientos as MovimientoGasto[];
 
@@ -182,6 +281,13 @@ function Gastos() {
     );
 
   const openNew = () => {
+    if (!canManageExpenses) {
+      window.alert(
+        'Solo el Administrador puede registrar o modificar gastos.'
+      );
+      return;
+    }
+
     setForm({
       proyectoId: proyectos[0]?.id || 'general',
       fecha: today(),
@@ -198,6 +304,13 @@ function Gastos() {
   };
 
   const saveGasto = () => {
+    if (!canManageExpenses) {
+      window.alert(
+        'Acceso restringido: solo el Administrador puede guardar cambios en gastos.'
+      );
+      return;
+    }
+
     if (!form.concepto.trim()) {
       window.alert('Escribe el concepto del gasto.');
       return;
@@ -413,15 +526,53 @@ function Gastos() {
           </div>
         </div>
 
-        <button
-          type="button"
-          className="primary"
-          onClick={openNew}
-        >
-          <Plus size={18} />
-          Nuevo gasto
-        </button>
+        {canManageExpenses ? (
+          <button
+            type="button"
+            className="primary"
+            onClick={openNew}
+          >
+            <Plus size={18} />
+            Nuevo gasto
+          </button>
+        ) : (
+          <div className="permission-badge">
+            <LockKeyhole size={17} />
+            <div>
+              <b>Solo lectura</b>
+              <span>
+                Solo ADM puede modificar gastos
+              </span>
+            </div>
+          </div>
+        )}
       </div>
+
+      {!checkingRole && (
+        <section
+          className={
+            canManageExpenses
+              ? 'access-note admin'
+              : 'access-note readonly'
+          }
+        >
+          <ShieldCheck size={18} />
+          <div>
+            <b>
+              {canManageExpenses
+                ? 'Permiso de Administrador activo'
+                : 'Módulo protegido'}
+            </b>
+            <span>
+              {canManageExpenses
+                ? `Puedes registrar y modificar gastos${
+                    currentRole ? ` como ${currentRole}` : ''
+                  }.`
+                : 'Puedes consultar e imprimir, pero no registrar ni modificar gastos.'}
+            </span>
+          </div>
+        </section>
+      )}
 
       <section className="stats">
         <article className="stat">
@@ -449,7 +600,7 @@ function Gastos() {
         </article>
       </section>
 
-      {showForm && (
+      {showForm && canManageExpenses && (
         <section className="form-card gasto-form">
           <div className="gasto-form-head">
             <div>
@@ -818,6 +969,80 @@ function Gastos() {
       )}
 
       <style jsx>{`
+        .permission-badge {
+          min-height: 46px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 13px;
+          border: 1px solid rgba(216, 157, 55, 0.28);
+          border-radius: 13px;
+          color: #8a5b0d;
+          background: rgba(255, 190, 79, 0.12);
+        }
+
+        .permission-badge b,
+        .permission-badge span {
+          display: block;
+        }
+
+        .permission-badge b {
+          font-size: 12px;
+        }
+
+        .permission-badge span {
+          margin-top: 2px;
+          font-size: 10px;
+          opacity: 0.8;
+        }
+
+        .access-note {
+          display: flex;
+          align-items: center;
+          gap: 11px;
+          margin-bottom: 16px;
+          padding: 12px 14px;
+          border-radius: 14px;
+        }
+
+        .access-note b,
+        .access-note span {
+          display: block;
+        }
+
+        .access-note b {
+          font-size: 12px;
+        }
+
+        .access-note span {
+          margin-top: 3px;
+          font-size: 11px;
+          line-height: 1.4;
+        }
+
+        .access-note.admin {
+          color: #0b735b;
+          border: 1px solid rgba(17, 142, 99, 0.22);
+          background: rgba(17, 142, 99, 0.09);
+        }
+
+        .access-note.readonly {
+          color: #8a5b0d;
+          border: 1px solid rgba(216, 157, 55, 0.24);
+          background: rgba(255, 190, 79, 0.1);
+        }
+
+        :global(html[data-theme='dark']) .permission-badge,
+        :global(html[data-theme='dark']) .access-note.readonly {
+          color: #ffd58a;
+          background: rgba(200, 133, 25, 0.13);
+        }
+
+        :global(html[data-theme='dark']) .access-note.admin {
+          color: #8fe6c7;
+          background: rgba(17, 142, 99, 0.14);
+        }
+
         .gastos-top {
           display: flex;
           justify-content: space-between;
