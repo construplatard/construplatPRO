@@ -128,11 +128,11 @@ function DashboardContent() {
 
   return (
     <div className="dashboard-ultra">
-      <div className="dashboard-light-line" />
-      <div className="dashboard-circle circle-one" />
-      <div className="dashboard-circle circle-two" />
-      <div className="dashboard-circle circle-three" />
-      <div className="dashboard-circle circle-four" />
+      <div className="dashboard-floating-dots" aria-hidden="true">
+        {Array.from({ length: 18 }).map((_, index) => (
+          <span key={index} className={`dashboard-dot dot-${index + 1}`} />
+        ))}
+      </div>
       <section className="hero-ultra">
         <div className="hero-accent hero-accent-a" />
         <div className="hero-accent hero-accent-b" />
@@ -419,151 +419,84 @@ function DashboardContent() {
           border-radius: 30px;
         }
 
-        .dashboard-ultra > :not(
-          .dashboard-light-line,
-          .dashboard-circle
-        ) {
+        .dashboard-ultra > :not(.dashboard-floating-dots) {
           position: relative;
           z-index: 2;
         }
 
-        .dashboard-light-line {
+        .dashboard-floating-dots {
           position: absolute;
-          z-index: 20;
-          top: -18%;
-          bottom: -18%;
-          left: -190px;
-          width: 115px;
-          pointer-events: none;
-          transform: rotate(17deg);
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.04),
-            rgba(255, 255, 255, 0.85),
-            rgba(255, 255, 255, 0.06),
-            transparent
-          );
-          filter: blur(1px);
-          opacity: 0;
-          animation: dashboardSweep 7.5s ease-in-out infinite;
-        }
-
-        .dashboard-circle {
-          position: absolute;
+          inset: 0;
           z-index: 1;
           pointer-events: none;
-          border-radius: 50%;
-          border: 1px solid rgba(86, 190, 255, 0.13);
+          overflow: hidden;
+        }
+
+        .dashboard-dot {
+          position: absolute;
+          border-radius: 999px;
           background: radial-gradient(
             circle at 35% 35%,
-            rgba(72, 183, 255, 0.13),
-            rgba(35, 115, 210, 0.025) 58%,
-            transparent 72%
+            rgba(184, 236, 255, 0.95) 0%,
+            rgba(112, 211, 255, 0.72) 40%,
+            rgba(29, 149, 235, 0.22) 72%,
+            transparent 100%
           );
           box-shadow:
-            inset 0 0 40px rgba(60, 175, 255, 0.04),
-            0 0 34px rgba(31, 122, 224, 0.04);
+            0 0 10px rgba(122, 220, 255, 0.28),
+            0 0 24px rgba(55, 162, 255, 0.12);
+          opacity: 0.45;
+          animation: dashboardDotFloat 10s ease-in-out infinite;
         }
 
-        .circle-one {
-          width: 330px;
-          height: 330px;
-          top: 7%;
-          right: -170px;
-          animation: circleDriftOne 12s ease-in-out infinite;
+        .dashboard-dot::after {
+          content: '';
+          position: absolute;
+          inset: -10px;
+          border-radius: inherit;
+          border: 1px solid rgba(161, 228, 255, 0.14);
+          opacity: 0.7;
         }
 
-        .circle-two {
-          width: 210px;
-          height: 210px;
-          top: 43%;
-          left: -115px;
-          animation: circleDriftTwo 10s ease-in-out infinite;
-        }
+        .dot-1  { width: 10px; height: 10px; top: 7%;  left: 6%;  animation-duration: 8s;  }
+        .dot-2  { width: 14px; height: 14px; top: 12%; left: 18%; animation-duration: 11s; animation-delay: -2s; }
+        .dot-3  { width: 8px;  height: 8px;  top: 9%;  left: 32%; animation-duration: 9s;  animation-delay: -1s; }
+        .dot-4  { width: 16px; height: 16px; top: 16%; left: 48%; animation-duration: 12s; animation-delay: -3s; }
+        .dot-5  { width: 9px;  height: 9px;  top: 10%; left: 64%; animation-duration: 8.8s; animation-delay: -2.5s; }
+        .dot-6  { width: 12px; height: 12px; top: 8%;  left: 80%; animation-duration: 10.5s; animation-delay: -1.5s; }
+        .dot-7  { width: 7px;  height: 7px;  top: 24%; left: 90%; animation-duration: 7.9s; animation-delay: -4s; }
+        .dot-8  { width: 11px; height: 11px; top: 33%; left: 11%; animation-duration: 10.8s; animation-delay: -3.2s; }
+        .dot-9  { width: 18px; height: 18px; top: 40%; left: 26%; animation-duration: 12.4s; animation-delay: -2.2s; }
+        .dot-10 { width: 8px;  height: 8px;  top: 37%; left: 43%; animation-duration: 8.7s; animation-delay: -1.7s; }
+        .dot-11 { width: 13px; height: 13px; top: 46%; left: 59%; animation-duration: 11.4s; animation-delay: -4.6s; }
+        .dot-12 { width: 7px;  height: 7px;  top: 42%; left: 76%; animation-duration: 9.5s; animation-delay: -2.9s; }
+        .dot-13 { width: 15px; height: 15px; top: 58%; left: 87%; animation-duration: 12.7s; animation-delay: -5s; }
+        .dot-14 { width: 9px;  height: 9px;  top: 71%; left: 8%;  animation-duration: 8.6s; animation-delay: -1.3s; }
+        .dot-15 { width: 14px; height: 14px; top: 75%; left: 24%; animation-duration: 10.2s; animation-delay: -3.8s; }
+        .dot-16 { width: 8px;  height: 8px;  top: 83%; left: 46%; animation-duration: 9.1s; animation-delay: -2.4s; }
+        .dot-17 { width: 17px; height: 17px; top: 79%; left: 68%; animation-duration: 11.8s; animation-delay: -3.1s; }
+        .dot-18 { width: 10px; height: 10px; top: 86%; left: 84%; animation-duration: 8.9s; animation-delay: -4.4s; }
 
-        .circle-three {
-          width: 150px;
-          height: 150px;
-          bottom: 8%;
-          right: 21%;
-          animation: circleDriftThree 9s ease-in-out infinite;
-        }
-
-        .circle-four {
-          width: 85px;
-          height: 85px;
-          top: 30%;
-          left: 56%;
-          border-color: rgba(131, 220, 255, 0.16);
-          animation: circleDriftFour 8s ease-in-out infinite;
-        }
-
-        @keyframes dashboardSweep {
-          0%,
-          12% {
-            left: -190px;
-            opacity: 0;
-          }
-
-          20% {
-            opacity: 0.8;
-          }
-
-          65% {
-            opacity: 0.8;
-          }
-
-          78%,
-          100% {
-            left: calc(100% + 210px);
-            opacity: 0;
-          }
-        }
-
-        @keyframes circleDriftOne {
+        @keyframes dashboardDotFloat {
           0%,
           100% {
-            transform: translate3d(0, 0, 0) scale(1);
+            transform: translate3d(0, 0, 0) scale(0.95);
+            opacity: 0.35;
+          }
+
+          25% {
+            transform: translate3d(10px, -18px, 0) scale(1.15);
+            opacity: 0.7;
           }
 
           50% {
-            transform: translate3d(-45px, 35px, 0) scale(1.08);
-          }
-        }
-
-        @keyframes circleDriftTwo {
-          0%,
-          100% {
-            transform: translate3d(0, 0, 0) scale(1);
+            transform: translate3d(-8px, -28px, 0) scale(1.02);
+            opacity: 0.95;
           }
 
-          50% {
-            transform: translate3d(55px, -36px, 0) scale(1.1);
-          }
-        }
-
-        @keyframes circleDriftThree {
-          0%,
-          100% {
-            transform: translate3d(0, 0, 0) rotate(0deg);
-          }
-
-          50% {
-            transform: translate3d(42px, -32px, 0) rotate(18deg);
-          }
-        }
-
-        @keyframes circleDriftFour {
-          0%,
-          100% {
-            transform: translate3d(0, 0, 0) scale(0.9);
-            opacity: 0.45;
-          }
-
-          50% {
-            transform: translate3d(-36px, 42px, 0) scale(1.18);
-            opacity: 0.9;
+          75% {
+            transform: translate3d(12px, -12px, 0) scale(1.12);
+            opacity: 0.58;
           }
         }
 
@@ -1425,8 +1358,7 @@ function DashboardContent() {
           .hero-ultra,
           .hero-wave,
           .hero-particle,
-          .dashboard-light-line,
-          .dashboard-circle,
+          .dashboard-dot,
           .hero-primary-icon,
           .hero-stat-line i,
           .metric-tile,
