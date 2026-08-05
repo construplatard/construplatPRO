@@ -13,6 +13,8 @@ import {
   ReceiptText,
   TrendingUp,
   WalletCards,
+  Activity,
+  Layers3,
 } from 'lucide-react';
 
 type Cotizacion = {
@@ -30,6 +32,12 @@ const money = (value: number) =>
     style: 'currency',
     currency: 'DOP',
     maximumFractionDigits: 0,
+  }).format(value);
+
+const compactMoney = (value: number) =>
+  new Intl.NumberFormat('es-DO', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
   }).format(value);
 
 const normalizar = (value: string | undefined) =>
@@ -146,8 +154,7 @@ function DashboardContent() {
     ? Math.round(
         activos.reduce(
           (total, proyecto) =>
-            total +
-            Number(proyecto.avanceFinanciero || 0),
+            total + Number(proyecto.avanceFinanciero || 0),
           0
         ) / activos.length
       )
@@ -170,142 +177,159 @@ function DashboardContent() {
 
   const acciones = [
     {
-      titulo: 'Cotización',
+      titulo: 'Nueva cotización',
       texto: 'Crear propuesta',
       href: '/cotizaciones',
       icono: FileText,
     },
     {
-      titulo: 'Bitácora',
+      titulo: 'Nueva bitácora',
       texto: 'Registrar avance',
       href: '/bitacoras',
       icono: NotebookPen,
     },
     {
-      titulo: 'Cobro',
-      texto: 'Registrar ingreso',
+      titulo: 'Registrar cobro',
+      texto: 'Actualizar ingreso',
       href: '/cobros',
       icono: WalletCards,
     },
   ];
 
   return (
-    <div className="mobile-dashboard">
-      <section className="hero-card">
+    <div className="executive-dashboard">
+      <section className="hero">
         <div className="hero-copy">
-          <span>CONSTRUPLATA PRO</span>
-          <h2>Resumen general de tus obras</h2>
+          <span className="hero-kicker">
+            CONSTRUPLATA PRO · PANEL EJECUTIVO
+          </span>
+
+          <h2>
+            Visión completa de tus proyectos,
+            <em> finanzas y avances.</em>
+          </h2>
+
           <p>
-            Datos financieros y avance de proyectos en una sola vista.
+            Todo lo importante de la operación en una vista rápida,
+            moderna y lista para computadora o teléfono.
           </p>
+
+          <div className="hero-metrics">
+            <div>
+              <span>Contratado</span>
+              <b>{money(contratado)}</b>
+            </div>
+
+            <div>
+              <span>Pendiente</span>
+              <b>{money(balance)}</b>
+            </div>
+
+            <div>
+              <span>Avance</span>
+              <b>{avancePromedio}%</b>
+            </div>
+          </div>
         </div>
 
-        <div className="hero-result">
-          <TrendingUp size={24} />
-          <div>
-            <span>Resultado</span>
+        <div className="hero-visual">
+          <div className="hero-ring ring-a" />
+          <div className="hero-ring ring-b" />
+          <div className="hero-result">
+            <Activity size={26} />
+            <span>Resultado provisional</span>
             <b>{money(resultado)}</b>
           </div>
         </div>
 
-        <Link href="/reportes" className="hero-link">
+        <Link href="/reportes" className="hero-action">
           Ver reportes
-          <ArrowUpRight size={16} />
+          <ArrowUpRight size={17} />
         </Link>
       </section>
 
       <section className="kpi-grid">
         <Link href="/proyectos" className="kpi-card">
-          <div className="kpi-icon">
-            <BriefcaseBusiness size={20} />
+          <div className="kpi-top">
+            <div className="icon-wrap">
+              <BriefcaseBusiness size={21} />
+            </div>
+            <span>Activos</span>
           </div>
-          <span>Proyectos activos</span>
+          <p>Proyectos activos</p>
           <b>{activos.length}</b>
-          <small>{proyectos.length} totales</small>
+          <small>{proyectos.length} proyectos totales</small>
         </Link>
 
         <Link href="/cobros" className="kpi-card">
-          <div className="kpi-icon">
-            <WalletCards size={20} />
+          <div className="kpi-top">
+            <div className="icon-wrap">
+              <WalletCards size={21} />
+            </div>
+            <span>Cobros</span>
           </div>
-          <span>Total cobrado</span>
+          <p>Total cobrado</p>
           <b>{money(cobrado)}</b>
           <small>{money(balance)} pendiente</small>
         </Link>
 
         <Link href="/gastos" className="kpi-card">
-          <div className="kpi-icon">
-            <ReceiptText size={20} />
+          <div className="kpi-top">
+            <div className="icon-wrap">
+              <ReceiptText size={21} />
+            </div>
+            <span>Gastos</span>
           </div>
-          <span>Total gastado</span>
+          <p>Total gastado</p>
           <b>{money(gastos)}</b>
-          <small>Egresos acumulados</small>
+          <small>Control de egresos</small>
         </Link>
 
         <Link href="/reportes" className="kpi-card featured">
-          <div className="kpi-icon">
-            <CircleDollarSign size={20} />
+          <div className="kpi-top">
+            <div className="icon-wrap">
+              <CircleDollarSign size={21} />
+            </div>
+            <span>Balance</span>
           </div>
-          <span>Resultado provisional</span>
+          <p>Resultado provisional</p>
           <b>{money(resultado)}</b>
           <small>Cobros menos gastos</small>
         </Link>
       </section>
 
-      <section className="quick-section">
-        <div className="section-title">
-          <div>
-            <span>Acciones rápidas</span>
-            <h3>Registrar</h3>
-          </div>
-        </div>
-
-        <div className="quick-grid">
-          {acciones.map((accion) => {
-            const Icon = accion.icono;
-
-            return (
-              <Link
-                key={accion.titulo}
-                href={accion.href}
-                className="quick-item"
-              >
-                <div>
-                  <Icon size={18} />
-                </div>
-                <span>
-                  <b>{accion.titulo}</b>
-                  <small>{accion.texto}</small>
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="charts-grid">
-        <article className="card">
-          <div className="card-head">
+      <section className="charts-layout">
+        <article className="panel finance-panel">
+          <div className="panel-head">
             <div>
-              <span>Finanzas</span>
+              <span>FINANZAS</span>
               <h3>Panorama financiero</h3>
             </div>
-            <BarChart3 size={20} />
+            <BarChart3 size={22} />
+          </div>
+
+          <div className="chart-summary">
+            <div>
+              <span>Total contratado</span>
+              <b>{money(contratado)}</b>
+            </div>
+            <div>
+              <span>Disponible</span>
+              <b>{money(balance)}</b>
+            </div>
           </div>
 
           <div className="bar-chart">
             {chartItems.map((item) => {
               const height = Math.max(
-                8,
-                Math.round(
-                  (item.value / maxChartValue) * 100
-                )
+                10,
+                Math.round((item.value / maxChartValue) * 100)
               );
 
               return (
                 <div className="bar-column" key={item.label}>
                   <div className="bar-value">
-                    {money(item.value)}
+                    {compactMoney(item.value)}
                   </div>
 
                   <div className="bar-track">
@@ -319,411 +343,505 @@ function DashboardContent() {
           </div>
         </article>
 
-        <article className="card">
-          <div className="card-head">
+        <article className="panel progress-panel">
+          <div className="panel-head">
             <div>
-              <span>Operaciones</span>
+              <span>OPERACIONES</span>
               <h3>Avance promedio</h3>
             </div>
-            <TrendingUp size={20} />
+            <TrendingUp size={22} />
           </div>
 
-          <div className="donut-row">
+          <div className="donuts">
             <ProgressDonut
               value={avancePromedio}
-              label="Físico"
+              label="Avance físico"
               className="physical"
             />
 
             <ProgressDonut
               value={financieroPromedio}
-              label="Financiero"
+              label="Avance financiero"
               className="financial"
             />
           </div>
 
-          <div className="difference">
+          <div className="difference-card">
             <span>Diferencia actual</span>
             <b>
-              {Math.abs(
-                avancePromedio - financieroPromedio
-              )}
-              %
+              {Math.abs(avancePromedio - financieroPromedio)}%
             </b>
+          </div>
+
+          <div className="pulse-line">
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
           </div>
         </article>
       </section>
 
-      <section className="projects-card">
-        <div className="section-title">
-          <div>
-            <span>Proyectos activos</span>
-            <h3>Seguimiento rápido</h3>
+      <section className="bottom-layout">
+        <article className="panel projects-panel">
+          <div className="panel-head">
+            <div>
+              <span>PROYECTOS ACTIVOS</span>
+              <h3>Seguimiento rápido</h3>
+            </div>
+
+            <Link href="/proyectos">
+              Ver todos
+              <ArrowUpRight size={15} />
+            </Link>
           </div>
 
-          <Link href="/proyectos">
-            Ver todos
-            <ArrowUpRight size={15} />
-          </Link>
-        </div>
+          <div className="project-list">
+            {activos.length ? (
+              activos.slice(0, 4).map((proyecto) => (
+                <Link
+                  href="/proyectos"
+                  className="project-row"
+                  key={proyecto.id}
+                >
+                  <div className="project-title">
+                    <div className="project-icon">
+                      <Layers3 size={18} />
+                    </div>
 
-        <div className="project-list">
-          {activos.length ? (
-            activos.slice(0, 4).map((proyecto) => (
-              <Link
-                href="/proyectos"
-                className="project-row"
-                key={proyecto.id}
-              >
-                <div className="project-top">
-                  <div>
-                    <b>{proyecto.nombre}</b>
-                    <span>
-                      {proyecto.numero.replace('COT-', '#')}
-                    </span>
+                    <div>
+                      <b>{proyecto.nombre}</b>
+                      <span>
+                        {proyecto.numero.replace('COT-', '#')}
+                      </span>
+                    </div>
                   </div>
 
-                  <strong>{proyecto.avance}%</strong>
-                </div>
+                  <div className="project-progress">
+                    <div>
+                      <span>Avance</span>
+                      <b>{proyecto.avance}%</b>
+                    </div>
 
-                <div className="mini-progress">
-                  <i
-                    style={{
-                      width: `${proyecto.avance}%`,
-                    }}
-                  />
-                </div>
+                    <div className="mini-progress">
+                      <i
+                        style={{
+                          width: `${proyecto.avance}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
 
-                <div className="project-bottom">
-                  <span>Balance pendiente</span>
-                  <b>{money(proyecto.balance)}</b>
-                </div>
-              </Link>
-            ))
-          ) : (
-            <div className="empty-dashboard">
-              No hay proyectos activos.
+                  <div className="project-balance">
+                    <span>Balance</span>
+                    <b>{money(proyecto.balance)}</b>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="empty-dashboard">
+                No hay proyectos activos.
+              </div>
+            )}
+          </div>
+        </article>
+
+        <article className="panel quick-panel">
+          <div className="panel-head">
+            <div>
+              <span>ACCESOS RÁPIDOS</span>
+              <h3>Crear y registrar</h3>
             </div>
-          )}
-        </div>
+          </div>
+
+          <div className="quick-list">
+            {acciones.map((accion) => {
+              const Icon = accion.icono;
+
+              return (
+                <Link
+                  key={accion.titulo}
+                  href={accion.href}
+                  className="quick-item"
+                >
+                  <div className="quick-icon">
+                    <Icon size={19} />
+                  </div>
+
+                  <div>
+                    <b>{accion.titulo}</b>
+                    <span>{accion.texto}</span>
+                  </div>
+
+                  <ArrowUpRight size={16} />
+                </Link>
+              );
+            })}
+          </div>
+        </article>
       </section>
 
       <style jsx>{`
-        .mobile-dashboard {
+        .executive-dashboard {
           display: grid;
-          gap: 16px;
+          gap: 18px;
         }
 
-        .hero-card {
+        .hero {
           position: relative;
           overflow: hidden;
-          min-height: 210px;
-          padding: 24px;
-          border-radius: 25px;
+          min-height: 250px;
+          display: grid;
+          grid-template-columns: 1.35fr 0.65fr auto;
+          align-items: center;
+          gap: 26px;
+          padding: 30px 32px;
+          border-radius: 28px;
           color: white;
           background:
             radial-gradient(
-              circle at 80% 18%,
-              rgba(0, 212, 255, 0.3),
-              transparent 26%
+              circle at 85% 20%,
+              rgba(55, 203, 255, 0.35),
+              transparent 28%
+            ),
+            radial-gradient(
+              circle at 10% 110%,
+              rgba(71, 86, 255, 0.48),
+              transparent 42%
             ),
             linear-gradient(
               135deg,
-              #041c3a,
-              #075291 60%,
-              #0a7dc0
+              #031a35 0%,
+              #06477e 52%,
+              #0c7db7 100%
             );
-          box-shadow: 0 20px 45px
-            rgba(4, 54, 100, 0.24);
+          box-shadow: 0 28px 70px rgba(4, 54, 100, 0.28);
         }
 
-        .hero-card::after {
+        .hero::before {
           content: '';
           position: absolute;
-          width: 190px;
-          height: 190px;
-          right: -80px;
-          bottom: -110px;
-          border: 30px solid
-            rgba(255, 255, 255, 0.06);
-          border-radius: 50%;
+          inset: 0;
+          background-image:
+            linear-gradient(
+              rgba(255,255,255,.035) 1px,
+              transparent 1px
+            ),
+            linear-gradient(
+              90deg,
+              rgba(255,255,255,.035) 1px,
+              transparent 1px
+            );
+          background-size: 28px 28px;
+          mask-image: linear-gradient(to right, #000, transparent 88%);
         }
 
-        .hero-copy {
+        .hero-copy,
+        .hero-visual,
+        .hero-action {
           position: relative;
           z-index: 2;
-          max-width: 580px;
         }
 
-        .hero-copy > span,
-        .section-title span,
-        .card-head span {
-          color: #1769e0;
-          font-size: 10px;
+        .hero-kicker {
+          font-size: 11px;
           font-weight: 900;
-          letter-spacing: 0.13em;
-          text-transform: uppercase;
+          letter-spacing: 0.16em;
+          color: #a9dcff;
         }
 
-        .hero-copy > span {
-          color: #9ed6ff;
+        .hero h2 {
+          max-width: 700px;
+          margin: 14px 0 12px;
+          font-size: clamp(38px, 4vw, 64px);
+          line-height: 0.98;
+          letter-spacing: -0.045em;
         }
 
-        .hero-copy h2 {
+        .hero h2 em {
+          display: block;
+          font-style: normal;
+          color: #9cd8ff;
+        }
+
+        .hero p {
           max-width: 620px;
-          margin: 8px 0 8px;
-          font-size: 31px;
-          line-height: 1.06;
-        }
-
-        .hero-copy p {
-          max-width: 540px;
           margin: 0;
-          color: rgba(255, 255, 255, 0.76);
-          line-height: 1.5;
+          color: rgba(255,255,255,.75);
+          line-height: 1.6;
         }
 
-        .hero-result {
-          position: relative;
-          z-index: 2;
-          width: fit-content;
+        .hero-metrics {
           display: flex;
-          align-items: center;
+          flex-wrap: wrap;
           gap: 10px;
-          margin-top: 20px;
-          padding: 12px 14px;
-          border: 1px solid
-            rgba(255, 255, 255, 0.14);
-          border-radius: 15px;
-          background:
-            rgba(255, 255, 255, 0.09);
+          margin-top: 22px;
         }
 
-        .hero-result span,
-        .hero-result b {
+        .hero-metrics > div {
+          min-width: 135px;
+          padding: 11px 13px;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 14px;
+          background: rgba(255,255,255,.08);
+          backdrop-filter: blur(12px);
+        }
+
+        .hero-metrics span,
+        .hero-metrics b {
           display: block;
         }
 
+        .hero-metrics span {
+          font-size: 10px;
+          opacity: .7;
+        }
+
+        .hero-metrics b {
+          margin-top: 4px;
+          font-size: 15px;
+        }
+
+        .hero-visual {
+          min-height: 180px;
+          display: grid;
+          place-items: center;
+        }
+
+        .hero-ring {
+          position: absolute;
+          border-radius: 50%;
+          border: 1px solid rgba(255,255,255,.14);
+        }
+
+        .ring-a {
+          width: 180px;
+          height: 180px;
+        }
+
+        .ring-b {
+          width: 130px;
+          height: 130px;
+        }
+
+        .hero-result {
+          width: 145px;
+          height: 145px;
+          display: grid;
+          place-items: center;
+          align-content: center;
+          gap: 7px;
+          border: 1px solid rgba(255,255,255,.16);
+          border-radius: 50%;
+          background: rgba(255,255,255,.1);
+          backdrop-filter: blur(14px);
+          text-align: center;
+        }
+
         .hero-result span {
-          font-size: 11px;
-          opacity: 0.72;
+          font-size: 10px;
+          opacity: .72;
         }
 
         .hero-result b {
-          margin-top: 2px;
-          font-size: 18px;
+          font-size: 17px;
+          max-width: 120px;
+          overflow-wrap: anywhere;
         }
 
-        .hero-link {
-          position: absolute;
-          z-index: 3;
-          right: 20px;
-          bottom: 20px;
+        .hero-action {
+          align-self: end;
           display: inline-flex;
           align-items: center;
-          gap: 6px;
-          padding: 10px 12px;
-          border-radius: 12px;
+          gap: 7px;
+          padding: 11px 13px;
+          border-radius: 13px;
+          background: rgba(255,255,255,.1);
           color: white;
-          background: rgba(
-            255,
-            255,
-            255,
-            0.11
-          );
           font-size: 12px;
-          font-weight: 800;
+          font-weight: 900;
         }
 
         .kpi-grid {
           display: grid;
-          grid-template-columns:
-            repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 12px;
         }
 
         .kpi-card {
           min-width: 0;
-          padding: 17px;
+          padding: 18px;
           border: 1px solid var(--line);
-          border-radius: 18px;
+          border-radius: 20px;
           background: var(--card);
           box-shadow: var(--soft-shadow);
+          transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+        .kpi-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 16px 36px rgba(23,105,224,.12);
         }
 
         .kpi-card.featured {
           color: white;
           border-color: transparent;
-          background: linear-gradient(
-            135deg,
-            #0d4f98,
-            #187fd3
-          );
+          background: linear-gradient(135deg, #0a4d98, #1686db);
         }
 
-        .kpi-icon {
-          width: 38px;
-          height: 38px;
+        .kpi-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+        }
+
+        .icon-wrap {
+          width: 40px;
+          height: 40px;
           display: grid;
           place-items: center;
-          margin-bottom: 14px;
           border-radius: 12px;
           color: #1769e0;
+          background: #eaf4ff;
+        }
+
+        .kpi-top > span {
+          padding: 6px 9px;
+          border-radius: 999px;
+          color: #1769e0;
           background: #edf5ff;
+          font-size: 10px;
+          font-weight: 900;
         }
 
-        .featured .kpi-icon {
+        .featured .icon-wrap,
+        .featured .kpi-top > span {
           color: white;
-          background: rgba(
-            255,
-            255,
-            255,
-            0.14
-          );
+          background: rgba(255,255,255,.14);
         }
 
-        .kpi-card > span,
-        .kpi-card > b,
-        .kpi-card > small {
-          display: block;
-        }
-
-        .kpi-card > span {
+        .kpi-card p {
+          margin: 17px 0 5px;
           color: var(--muted);
           font-size: 12px;
         }
 
-        .featured > span,
-        .featured > small {
-          color: rgba(
-            255,
-            255,
-            255,
-            0.74
-          );
+        .kpi-card > b {
+          display: block;
+          color: var(--text);
+          font-size: 22px;
+          overflow-wrap: anywhere;
         }
 
-        .kpi-card > b {
-          margin-top: 7px;
-          color: var(--text);
-          font-size: 23px;
-          overflow-wrap: anywhere;
+        .kpi-card small {
+          display: block;
+          margin-top: 5px;
+          color: var(--muted);
+        }
+
+        .featured p,
+        .featured small {
+          color: rgba(255,255,255,.74);
         }
 
         .featured > b {
           color: white;
         }
 
-        .kpi-card > small {
-          margin-top: 5px;
-          color: var(--muted);
-          line-height: 1.35;
+        .charts-layout,
+        .bottom-layout {
+          display: grid;
+          gap: 16px;
         }
 
-        .quick-section,
-        .card,
-        .projects-card {
-          padding: 20px;
+        .charts-layout {
+          grid-template-columns: 1.25fr .75fr;
+        }
+
+        .bottom-layout {
+          grid-template-columns: 1.25fr .75fr;
+        }
+
+        .panel {
+          padding: 21px;
           border: 1px solid var(--line);
-          border-radius: 20px;
+          border-radius: 22px;
           background: var(--card);
           box-shadow: var(--soft-shadow);
         }
 
-        .section-title,
-        .card-head {
+        .panel-head {
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 12px;
         }
 
-        .section-title h3,
-        .card-head h3 {
+        .panel-head span {
+          color: #1769e0;
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: .14em;
+        }
+
+        .panel-head h3 {
           margin: 5px 0 0;
           color: var(--text);
         }
 
-        .section-title > a {
+        .panel-head > a {
           display: inline-flex;
           align-items: center;
           gap: 5px;
           color: #1769e0;
           font-size: 12px;
-          font-weight: 800;
+          font-weight: 900;
         }
 
-        .quick-grid {
+        .chart-summary {
           display: grid;
-          grid-template-columns:
-            repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 10px;
-          margin-top: 16px;
+          margin-top: 18px;
         }
 
-        .quick-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          min-width: 0;
+        .chart-summary > div {
           padding: 13px;
-          border: 1px solid var(--line);
           border-radius: 14px;
           background: var(--surface);
         }
 
-        .quick-item > div {
-          flex: 0 0 auto;
-          width: 36px;
-          height: 36px;
-          display: grid;
-          place-items: center;
-          border-radius: 11px;
-          color: #1769e0;
-          background: #e9f3ff;
-        }
-
-        .quick-item span,
-        .quick-item b,
-        .quick-item small {
+        .chart-summary span,
+        .chart-summary b {
           display: block;
-          min-width: 0;
         }
 
-        .quick-item b {
-          color: var(--text);
-          font-size: 13px;
-        }
-
-        .quick-item small {
-          margin-top: 3px;
+        .chart-summary span {
           color: var(--muted);
-          font-size: 11px;
+          font-size: 10px;
         }
 
-        .charts-grid {
-          display: grid;
-          grid-template-columns:
-            1.2fr 0.8fr;
-          gap: 16px;
+        .chart-summary b {
+          margin-top: 4px;
+          color: var(--text);
         }
 
         .bar-chart {
-          height: 260px;
+          height: 250px;
           display: grid;
-          grid-template-columns:
-            repeat(4, 1fr);
-          gap: 14px;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
           align-items: end;
-          margin-top: 22px;
+          margin-top: 20px;
         }
 
         .bar-column {
           height: 100%;
-          min-width: 0;
           display: grid;
-          grid-template-rows:
-            auto 1fr auto;
+          grid-template-rows: auto 1fr auto;
           gap: 8px;
           text-align: center;
         }
@@ -731,7 +849,6 @@ function DashboardContent() {
         .bar-value {
           color: var(--muted);
           font-size: 10px;
-          overflow-wrap: anywhere;
         }
 
         .bar-track {
@@ -744,13 +861,8 @@ function DashboardContent() {
         .bar-track i {
           position: absolute;
           inset: auto 0 0;
-          display: block;
           border-radius: 12px;
-          background: linear-gradient(
-            180deg,
-            #26a8f2,
-            #1769e0
-          );
+          background: linear-gradient(180deg, #27b2ff, #1769e0);
         }
 
         .bar-column > span {
@@ -758,19 +870,17 @@ function DashboardContent() {
           font-size: 11px;
         }
 
-        .donut-row {
+        .donuts {
           display: grid;
-          grid-template-columns:
-            repeat(2, 1fr);
-          gap: 14px;
-          margin-top: 24px;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+          margin-top: 22px;
         }
 
-        .difference {
+        .difference-card {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 10px;
           margin-top: 18px;
           padding: 14px;
           border-radius: 14px;
@@ -778,10 +888,32 @@ function DashboardContent() {
           color: var(--muted);
         }
 
-        .difference b {
+        .difference-card b {
           color: var(--text);
           font-size: 20px;
         }
+
+        .pulse-line {
+          height: 60px;
+          display: flex;
+          align-items: end;
+          justify-content: space-between;
+          gap: 7px;
+          margin-top: 16px;
+        }
+
+        .pulse-line span {
+          flex: 1;
+          border-radius: 999px;
+          background: linear-gradient(180deg, #35c9ff, #1769e0);
+        }
+
+        .pulse-line span:nth-child(1) { height: 22%; }
+        .pulse-line span:nth-child(2) { height: 55%; }
+        .pulse-line span:nth-child(3) { height: 34%; }
+        .pulse-line span:nth-child(4) { height: 76%; }
+        .pulse-line span:nth-child(5) { height: 48%; }
+        .pulse-line span:nth-child(6) { height: 88%; }
 
         .project-list {
           display: grid;
@@ -791,45 +923,64 @@ function DashboardContent() {
 
         .project-row {
           display: grid;
-          gap: 10px;
+          grid-template-columns: 1.1fr .9fr auto;
+          align-items: center;
+          gap: 14px;
           padding: 14px;
           border: 1px solid var(--line);
-          border-radius: 15px;
+          border-radius: 16px;
           background: var(--surface);
         }
 
-        .project-top,
-        .project-bottom {
+        .project-title {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 12px;
+          gap: 10px;
+          min-width: 0;
         }
 
-        .project-top b,
-        .project-top span {
+        .project-icon {
+          flex: 0 0 auto;
+          width: 38px;
+          height: 38px;
+          display: grid;
+          place-items: center;
+          border-radius: 12px;
+          color: #1769e0;
+          background: #eaf4ff;
+        }
+
+        .project-title b,
+        .project-title span,
+        .project-progress span,
+        .project-progress b,
+        .project-balance span,
+        .project-balance b {
           display: block;
         }
 
-        .project-top b {
+        .project-title b {
           color: var(--text);
           font-size: 13px;
         }
 
-        .project-top span,
-        .project-bottom span {
+        .project-title span,
+        .project-progress span,
+        .project-balance span {
           margin-top: 3px;
           color: var(--muted);
-          font-size: 11px;
+          font-size: 10px;
         }
 
-        .project-top strong {
-          color: #1769e0;
-          font-size: 18px;
+        .project-progress > div:first-child {
+          display: flex;
+          justify-content: space-between;
+          gap: 10px;
         }
 
         .mini-progress {
           height: 7px;
+          margin-top: 7px;
           overflow: hidden;
           border-radius: 999px;
           background: var(--line);
@@ -839,69 +990,147 @@ function DashboardContent() {
           display: block;
           height: 100%;
           border-radius: inherit;
-          background: linear-gradient(
-            90deg,
-            #1769e0,
-            #24a1ee
-          );
+          background: linear-gradient(90deg, #1769e0, #26a8f2);
         }
 
-        .project-bottom b {
+        .project-balance {
+          text-align: right;
+        }
+
+        .project-balance b {
+          margin-top: 4px;
           color: var(--text);
         }
 
+        .quick-list {
+          display: grid;
+          gap: 10px;
+          margin-top: 16px;
+        }
+
+        .quick-item {
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          align-items: center;
+          gap: 11px;
+          padding: 13px;
+          border: 1px solid var(--line);
+          border-radius: 15px;
+          background: var(--surface);
+        }
+
+        .quick-icon {
+          width: 40px;
+          height: 40px;
+          display: grid;
+          place-items: center;
+          border-radius: 12px;
+          color: #1769e0;
+          background: #eaf4ff;
+        }
+
+        .quick-item b,
+        .quick-item span {
+          display: block;
+        }
+
+        .quick-item b {
+          color: var(--text);
+          font-size: 13px;
+        }
+
+        .quick-item span {
+          margin-top: 3px;
+          color: var(--muted);
+          font-size: 11px;
+        }
+
         .empty-dashboard {
-          padding: 26px;
+          padding: 24px;
           color: var(--muted);
           text-align: center;
         }
 
         :global(html[data-theme='dark']) .kpi-card,
-        :global(html[data-theme='dark']) .quick-section,
-        :global(html[data-theme='dark']) .card,
-        :global(html[data-theme='dark']) .projects-card {
+        :global(html[data-theme='dark']) .panel {
           background: #0e1c30;
         }
 
-        :global(html[data-theme='dark']) .quick-item,
         :global(html[data-theme='dark']) .project-row,
+        :global(html[data-theme='dark']) .quick-item,
+        :global(html[data-theme='dark']) .chart-summary > div,
         :global(html[data-theme='dark']) .bar-track,
-        :global(html[data-theme='dark']) .difference {
+        :global(html[data-theme='dark']) .difference-card {
           background: #0a1728;
         }
 
-        @media (max-width: 900px) {
-          .mobile-dashboard {
-            gap: 13px;
+        @media (max-width: 1000px) {
+          .hero {
+            grid-template-columns: 1fr .55fr;
           }
 
-          .hero-card {
-            min-height: auto;
-            padding: 20px;
-          }
-
-          .hero-copy h2 {
-            max-width: 260px;
-            font-size: 26px;
-          }
-
-          .hero-copy p {
-            max-width: 260px;
-            font-size: 13px;
-          }
-
-          .hero-result {
-            margin-top: 18px;
-          }
-
-          .hero-link {
-            right: 16px;
-            bottom: 16px;
+          .hero-action {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
           }
 
           .kpi-grid {
-            grid-template-columns:
-              repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .charts-layout,
+          .bottom-layout {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 700px) {
+          .executive-dashboard {
+            gap: 13px;
+          }
+
+          .hero {
+            min-height: auto;
+            grid-template-columns: 1fr;
+            padding: 20px;
+            border-radius: 22px;
+          }
+
+          .hero h2 {
+            font-size: 29px;
+          }
+
+          .hero p {
+            font-size: 13px;
+          }
+
+          .hero-visual {
+            min-height: 150px;
+          }
+
+          .hero-action {
+            position: relative;
+            right: auto;
+            bottom: auto;
+            width: fit-content;
+          }
+
+          .hero-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .hero-metrics > div {
+            min-width: 0;
+          }
+
+          .hero-metrics > div:last-child {
+            grid-column: 1 / -1;
+          }
+
+          .kpi-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 10px;
           }
 
@@ -910,71 +1139,16 @@ function DashboardContent() {
           }
 
           .kpi-card > b {
-            font-size: 18px;
+            font-size: 17px;
           }
 
-          .quick-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .charts-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .bar-chart {
-            height: 220px;
-          }
-        }
-
-        @media (max-width: 560px) {
-          .hero-card {
-            border-radius: 20px;
-          }
-
-          .hero-result {
-            width: calc(100% - 120px);
-          }
-
-          .hero-result b {
-            font-size: 15px;
-          }
-
-          .hero-link {
-            padding: 9px 10px;
-            font-size: 11px;
-          }
-
-          .kpi-grid {
-            grid-template-columns:
-              repeat(2, minmax(0, 1fr));
-          }
-
-          .kpi-icon {
-            width: 34px;
-            height: 34px;
-            margin-bottom: 10px;
-          }
-
-          .kpi-card > span {
-            font-size: 11px;
-          }
-
-          .kpi-card > b {
-            font-size: 16px;
-          }
-
-          .kpi-card > small {
-            font-size: 10px;
-          }
-
-          .quick-section,
-          .card,
-          .projects-card {
+          .panel {
             padding: 16px;
             border-radius: 18px;
           }
 
           .bar-chart {
+            height: 210px;
             gap: 8px;
           }
 
@@ -986,33 +1160,31 @@ function DashboardContent() {
             font-size: 9px;
           }
 
-          .donut-row {
-            gap: 8px;
+          .project-row {
+            grid-template-columns: 1fr;
+            align-items: stretch;
           }
 
-          .project-bottom {
-            align-items: flex-start;
-            flex-direction: column;
-            gap: 3px;
+          .project-balance {
+            text-align: left;
+          }
+
+          .donuts {
+            gap: 6px;
           }
         }
 
-        @media (max-width: 380px) {
+        @media (max-width: 390px) {
           .kpi-grid {
             grid-template-columns: 1fr;
           }
 
-          .hero-result {
-            width: 100%;
-            box-sizing: border-box;
+          .hero-metrics {
+            grid-template-columns: 1fr;
           }
 
-          .hero-link {
-            position: relative;
-            right: auto;
-            bottom: auto;
-            width: fit-content;
-            margin-top: 12px;
+          .hero-metrics > div:last-child {
+            grid-column: auto;
           }
         }
       `}</style>
@@ -1061,16 +1233,16 @@ function ProgressDonut({
         }
 
         .donut {
-          width: 118px;
-          height: 118px;
+          width: 120px;
+          height: 120px;
           display: grid;
           place-items: center;
           border-radius: 50%;
         }
 
         .donut > div {
-          width: 82px;
-          height: 82px;
+          width: 84px;
+          height: 84px;
           display: grid;
           place-items: center;
           border-radius: 50%;
@@ -1085,26 +1257,31 @@ function ProgressDonut({
         .donut-item > span {
           color: var(--muted);
           font-size: 12px;
-          font-weight: 800;
+          font-weight: 900;
+          text-align: center;
         }
 
         :global(html[data-theme='dark']) .donut > div {
           background: #0e1c30;
         }
 
-        @media (max-width: 560px) {
+        @media (max-width: 700px) {
           .donut {
-            width: 96px;
-            height: 96px;
+            width: 98px;
+            height: 98px;
           }
 
           .donut > div {
-            width: 68px;
-            height: 68px;
+            width: 69px;
+            height: 69px;
           }
 
           .donut b {
             font-size: 18px;
+          }
+
+          .donut-item > span {
+            font-size: 10px;
           }
         }
       `}</style>
