@@ -11,6 +11,7 @@ import {
   Filter,
   FolderKanban,
   Plus,
+  Pencil,
   Printer,
   ReceiptText,
   Save,
@@ -217,6 +218,7 @@ function Gastos() {
   );
 
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filterProjectId, setFilterProjectId] = useState('todos');
   const [filterCategory, setFilterCategory] = useState('todas');
@@ -288,6 +290,7 @@ function Gastos() {
       return;
     }
 
+    setEditingId(null);
     setForm({
       proyectoId: proyectos[0]?.id || 'general',
       fecha: today(),
@@ -300,6 +303,30 @@ function Gastos() {
       observaciones: '',
     });
 
+    setShowForm(true);
+  };
+
+  const openEdit = (gasto: MovimientoGasto) => {
+    if (!canManageExpenses) {
+      window.alert(
+        'Solo el Administrador puede modificar gastos.'
+      );
+      return;
+    }
+
+    setEditingId(gasto.id);
+    setSelectedId(null);
+    setForm({
+      proyectoId: gasto.proyectoId || 'general',
+      fecha: gasto.fecha || today(),
+      categoria: gasto.categoria || 'Otros',
+      suplidor: gasto.suplidor || '',
+      concepto: gasto.concepto || '',
+      monto: String(gasto.monto || ''),
+      metodo: gasto.metodo || 'Transferencia',
+      comprobante: gasto.comprobante || '',
+      observaciones: gasto.observaciones || '',
+    });
     setShowForm(true);
   };
 
@@ -323,8 +350,8 @@ function Gastos() {
       return;
     }
 
-    const nuevoGasto: MovimientoGasto = {
-      id: uid('gasto'),
+    const datosGasto: MovimientoGasto = {
+      id: editingId || uid('gasto'),
       tipo: 'gasto',
       fecha: form.fecha,
       proyectoId: form.proyectoId || 'general',
@@ -339,9 +366,16 @@ function Gastos() {
 
     setData((current) => ({
       ...current,
-      movimientos: [...current.movimientos, nuevoGasto] as any,
+      movimientos: editingId
+        ? current.movimientos.map((movimiento) =>
+            movimiento.id === editingId
+              ? (datosGasto as any)
+              : movimiento
+          )
+        : [...current.movimientos, datosGasto as any],
     }));
 
+    setEditingId(null);
     setShowForm(false);
   };
 
@@ -604,14 +638,21 @@ function Gastos() {
         <section className="form-card gasto-form">
           <div className="gasto-form-head">
             <div>
-              <span className="eyebrow">Nuevo gasto</span>
-              <h3>Registrar egreso</h3>
+              <span className="eyebrow">
+                {editingId ? 'Modificar gasto' : 'Nuevo gasto'}
+              </span>
+              <h3>
+                {editingId ? 'Editar egreso registrado' : 'Registrar egreso'}
+              </h3>
             </div>
 
             <button
               type="button"
               className="icon"
-              onClick={() => setShowForm(false)}
+              onClick={() => {
+                setEditingId(null);
+                setShowForm(false);
+              }}
             >
               <X size={18} />
             </button>
@@ -863,6 +904,17 @@ function Gastos() {
                         <Eye size={16} />
                       </button>
 
+                      {canManageExpenses && (
+                        <button
+                          type="button"
+                          className="cliente-action-btn edit"
+                          title="Modificar gasto"
+                          onClick={() => openEdit(gasto)}
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      )}
+
                       <button
                         type="button"
                         className="cliente-action-btn edit"
@@ -955,6 +1007,17 @@ function Gastos() {
             </section>
 
             <div className="gasto-detail-actions">
+              {canManageExpenses && (
+                <button
+                  type="button"
+                  className="secondary-action"
+                  onClick={() => openEdit(selected)}
+                >
+                  <Pencil size={17} />
+                  Modificar gasto
+                </button>
+              )}
+
               <button
                 type="button"
                 className="primary"
@@ -969,6 +1032,21 @@ function Gastos() {
       )}
 
       <style jsx>{`
+        .secondary-action {
+          min-height: 42px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 0 15px;
+          border: 1px solid rgba(23, 104, 190, 0.28);
+          border-radius: 12px;
+          color: #1768be;
+          background: rgba(23, 104, 190, 0.08);
+          font-weight: 900;
+          cursor: pointer;
+        }
+
         .permission-badge {
           min-height: 46px;
           display: flex;
