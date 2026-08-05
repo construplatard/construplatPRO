@@ -174,13 +174,38 @@ function DashboardContent() {
   return (
     <div className="clean-dashboard">
       <section className="welcome-card">
-        <div>
-          <span className="welcome-kicker">Panel ejecutivo</span>
-          <h2>Resumen general de CONSTRUPLATA</h2>
+        <div className="welcome-copy">
+          <span className="welcome-kicker">CONSTRUPLATA PRO · Panel ejecutivo</span>
+          <h2>Control total de tus proyectos en una sola vista</h2>
           <p>
-            Una vista simple de los proyectos, cobros, gastos y avances más
-            importantes.
+            Supervisa el rendimiento financiero, el avance de las obras y los
+            balances pendientes con datos reales y actualizados.
           </p>
+
+          <div className="welcome-mini-stats">
+            <div>
+              <span>Contratado</span>
+              <b>{money(contratado)}</b>
+            </div>
+            <div>
+              <span>Pendiente</span>
+              <b>{money(balance)}</b>
+            </div>
+            <div>
+              <span>Avance promedio</span>
+              <b>{avancePromedio}%</b>
+            </div>
+          </div>
+        </div>
+
+        <div className="welcome-visual">
+          <div className="hero-orbit orbit-one" />
+          <div className="hero-orbit orbit-two" />
+          <div className="hero-center">
+            <TrendingUp size={30} />
+            <b>{money(resultado)}</b>
+            <span>Resultado provisional</span>
+          </div>
         </div>
 
         <Link href="/reportes" className="welcome-action">
@@ -389,35 +414,176 @@ function DashboardContent() {
         }
 
         .welcome-card {
-          min-height: 150px;
-          padding: 28px;
-          display: flex;
+          min-height: 235px;
+          padding: 30px 32px;
+          display: grid;
+          grid-template-columns: 1.35fr 0.75fr auto;
           align-items: center;
-          justify-content: space-between;
-          gap: 24px;
+          gap: 28px;
           overflow: hidden;
           position: relative;
-          border-radius: 26px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 28px;
           color: #fff;
           background:
-            radial-gradient(
-              circle at 85% 20%,
-              rgba(63, 190, 255, 0.35),
-              transparent 34%
-            ),
-            linear-gradient(135deg, #062a56, #07579b 58%, #1189ce);
-          box-shadow: 0 24px 60px rgba(4, 54, 100, 0.2);
+            radial-gradient(circle at 78% 25%, rgba(0, 212, 255, 0.32), transparent 28%),
+            radial-gradient(circle at 12% 120%, rgba(62, 103, 255, 0.5), transparent 42%),
+            linear-gradient(135deg, #041c3a 0%, #063f78 48%, #0879b8 100%);
+          box-shadow:
+            0 28px 70px rgba(4, 54, 100, 0.28),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .welcome-card::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background-image:
+            linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+          background-size: 28px 28px;
+          mask-image: linear-gradient(to right, #000, transparent 85%);
         }
 
         .welcome-card::after {
           content: '';
-          width: 220px;
-          height: 220px;
+          width: 310px;
+          height: 310px;
           position: absolute;
-          right: -70px;
-          bottom: -125px;
-          border: 34px solid rgba(255, 255, 255, 0.08);
+          right: -100px;
+          bottom: -185px;
+          border: 44px solid rgba(255, 255, 255, 0.055);
           border-radius: 50%;
+        }
+
+        .welcome-copy {
+          position: relative;
+          z-index: 2;
+        }
+
+        .welcome-mini-stats {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-top: 20px;
+        }
+
+        .welcome-mini-stats > div {
+          min-width: 125px;
+          padding: 11px 13px;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 14px;
+          background: rgba(255,255,255,.08);
+          backdrop-filter: blur(12px);
+        }
+
+        .welcome-mini-stats span,
+        .welcome-mini-stats b {
+          display: block;
+        }
+
+        .welcome-mini-stats span {
+          font-size: 9px;
+          opacity: .72;
+        }
+
+        .welcome-mini-stats b {
+          margin-top: 4px;
+          font-size: 14px;
+        }
+
+        .welcome-visual {
+          width: 190px;
+          height: 190px;
+          position: relative;
+          justify-self: center;
+          display: grid;
+          place-items: center;
+        }
+
+        .hero-orbit {
+          position: absolute;
+          border-radius: 50%;
+          border: 1px solid rgba(255,255,255,.17);
+        }
+
+        .orbit-one {
+          inset: 8px;
+          animation: spin 18s linear infinite;
+        }
+
+        .orbit-one::before,
+        .orbit-two::before {
+          content: '';
+          width: 9px;
+          height: 9px;
+          position: absolute;
+          top: 50%;
+          left: -5px;
+          border-radius: 50%;
+          background: #59dcff;
+          box-shadow: 0 0 18px #59dcff;
+        }
+
+        .orbit-two {
+          inset: 28px;
+          animation: spinReverse 13s linear infinite;
+        }
+
+        .orbit-two::before {
+          top: -5px;
+          left: 50%;
+          background: #86ffcf;
+          box-shadow: 0 0 18px #86ffcf;
+        }
+
+        .hero-center {
+          width: 118px;
+          height: 118px;
+          display: grid;
+          place-items: center;
+          align-content: center;
+          text-align: center;
+          position: relative;
+          z-index: 2;
+          border: 1px solid rgba(255,255,255,.2);
+          border-radius: 50%;
+          background: rgba(2, 28, 58, .4);
+          box-shadow: inset 0 0 30px rgba(70, 190, 255, .15);
+          backdrop-filter: blur(12px);
+        }
+
+        .hero-center svg {
+          margin-bottom: 6px;
+          color: #7ce6ff;
+        }
+
+        .hero-center b,
+        .hero-center span {
+          display: block;
+        }
+
+        .hero-center b {
+          max-width: 100px;
+          overflow: hidden;
+          font-size: 15px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .hero-center span {
+          margin-top: 4px;
+          font-size: 8px;
+          opacity: .68;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        @keyframes spinReverse {
+          to { transform: rotate(-360deg); }
         }
 
         .welcome-kicker {
@@ -470,14 +636,35 @@ function DashboardContent() {
 
         .dashboard-kpi {
           min-width: 0;
-          padding: 19px;
+          padding: 20px;
           display: block;
           position: relative;
+          overflow: hidden;
           border: 1px solid var(--line);
-          border-radius: 20px;
+          border-radius: 22px;
           color: var(--text);
-          background: var(--card);
+          background:
+            linear-gradient(145deg, rgba(255,255,255,.045), transparent),
+            var(--card);
           box-shadow: var(--soft-shadow);
+          transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+        }
+
+        .dashboard-kpi::after {
+          content: '';
+          width: 95px;
+          height: 95px;
+          position: absolute;
+          right: -35px;
+          bottom: -45px;
+          border-radius: 50%;
+          background: rgba(23,105,224,.07);
+        }
+
+        .dashboard-kpi:hover {
+          transform: translateY(-4px);
+          border-color: rgba(23,105,224,.35);
+          box-shadow: 0 18px 40px rgba(23,105,224,.12);
         }
 
         .dashboard-kpi.featured {
@@ -542,11 +729,26 @@ function DashboardContent() {
         .chart-card,
         .projects-summary-card,
         .quick-card {
-          padding: 22px;
+          padding: 23px;
+          overflow: hidden;
+          position: relative;
           border: 1px solid var(--line);
-          border-radius: 22px;
-          background: var(--card);
+          border-radius: 24px;
+          background:
+            linear-gradient(145deg, rgba(23,105,224,.035), transparent 45%),
+            var(--card);
           box-shadow: var(--soft-shadow);
+        }
+
+        .chart-card::before {
+          content: '';
+          width: 150px;
+          height: 150px;
+          position: absolute;
+          right: -70px;
+          top: -80px;
+          border-radius: 50%;
+          background: rgba(23,105,224,.06);
         }
 
         .chart-head,
@@ -614,8 +816,24 @@ function DashboardContent() {
           width: 100%;
           min-height: 8px;
           display: block;
+          position: relative;
           border-radius: 13px 13px 6px 6px;
-          background: linear-gradient(180deg, #22b2e6, #1769e0);
+          background: linear-gradient(180deg, #54dcff, #1769e0);
+          box-shadow: 0 12px 25px rgba(23,105,224,.24);
+        }
+
+        .bar-track i::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,.32), transparent);
+          animation: shimmer 2.8s infinite;
+        }
+
+        @keyframes shimmer {
+          0% { transform: translateX(-120%); }
+          100% { transform: translateX(120%); }
         }
 
         .bar-column:nth-child(3) .bar-track i {
@@ -800,6 +1018,14 @@ function DashboardContent() {
         }
 
         @media (max-width: 1050px) {
+          .welcome-card {
+            grid-template-columns: 1fr auto;
+          }
+
+          .welcome-visual {
+            display: none;
+          }
+
           .dashboard-kpis {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
@@ -812,12 +1038,12 @@ function DashboardContent() {
 
         @media (max-width: 700px) {
           .welcome-card {
+            grid-template-columns: 1fr;
             align-items: stretch;
-            flex-direction: column;
           }
 
           .welcome-action {
-            align-self: flex-start;
+            justify-self: start;
           }
 
           .dashboard-kpis {
