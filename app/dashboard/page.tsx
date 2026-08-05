@@ -129,44 +129,54 @@ function DashboardContent() {
   return (
     <div className="dashboard-ultra">
       <section className="hero-ultra">
-        <div className="hero-glow hero-glow-1" />
-        <div className="hero-glow hero-glow-2" />
+        <div className="hero-accent hero-accent-a" />
+        <div className="hero-accent hero-accent-b" />
 
-        <div className="hero-compact-head">
+        <div className="hero-top">
           <div>
-            <span className="hero-title">Resumen ejecutivo</span>
-            <h2>Estado general de tus obras</h2>
+            <span className="hero-eyebrow">RESUMEN EJECUTIVO</span>
+            <h2>Estado general de las obras</h2>
           </div>
 
           <Link href="/reportes" className="hero-report-link">
-            Ver reportes
+            Reportes
             <ArrowUpRight size={16} />
           </Link>
         </div>
 
-        <div className="hero-compact-grid">
-          <div className="hero-compact-card">
-            <span>Resultado</span>
-            <b>{money(utilidad)}</b>
-            <small>Cobros menos gastos</small>
+        <div className="hero-dashboard-grid">
+          <div className="hero-primary">
+            <div className="hero-primary-icon">
+              <TrendingUp size={24} />
+            </div>
+
+            <div>
+              <span>Resultado provisional</span>
+              <b>{money(utilidad)}</b>
+              <small>Cobros menos gastos registrados</small>
+            </div>
           </div>
 
-          <div className="hero-compact-card">
-            <span>Proyectos activos</span>
+          <div className="hero-stat">
+            <span>Activos</span>
             <b>{activos.length}</b>
-            <small>{proyectos.length} proyectos totales</small>
+            <div className="hero-stat-line">
+              <i style={{ width: `${Math.min(activos.length * 12, 100)}%` }} />
+            </div>
           </div>
 
-          <div className="hero-compact-card">
+          <div className="hero-stat">
             <span>Avance promedio</span>
             <b>{avancePromedio}%</b>
-            <small>Según bitácoras</small>
+            <div className="hero-stat-line cyan">
+              <i style={{ width: `${avancePromedio}%` }} />
+            </div>
           </div>
 
-          <div className="hero-compact-card">
-            <span>Pendiente por cobrar</span>
+          <div className="hero-stat">
+            <span>Pendiente</span>
             <b>{money(pendiente)}</b>
-            <small>Balance contractual</small>
+            <small>Por cobrar</small>
           </div>
         </div>
       </section>
@@ -379,121 +389,186 @@ function DashboardContent() {
         .hero-ultra {
           position: relative;
           overflow: hidden;
-          border-radius: 28px;
           padding: 24px;
+          border-radius: 28px;
+          color: #ffffff;
           background:
-            radial-gradient(circle at 92% 8%, rgba(74, 188, 255, 0.24), transparent 24%),
-            linear-gradient(135deg, #061b36 0%, #0a4478 52%, #0c7dbf 100%);
-          box-shadow: 0 22px 52px rgba(8, 59, 122, 0.22);
+            radial-gradient(
+              circle at 92% 10%,
+              rgba(79, 199, 255, 0.3),
+              transparent 26%
+            ),
+            linear-gradient(
+              135deg,
+              #051a34 0%,
+              #0a477f 55%,
+              #0b83c8 100%
+            );
+          box-shadow: 0 24px 60px rgba(5, 61, 119, 0.25);
         }
 
-        .hero-glow {
+        .hero-accent {
           position: absolute;
-          border-radius: 50%;
-          opacity: 0.42;
           pointer-events: none;
+          border-radius: 50%;
+          border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .hero-glow-1 {
-          width: 240px;
-          height: 240px;
-          right: -90px;
-          top: -100px;
-          background: rgba(145, 225, 255, 0.18);
+        .hero-accent-a {
+          width: 260px;
+          height: 260px;
+          right: -110px;
+          top: -130px;
+          box-shadow:
+            0 0 0 35px rgba(255, 255, 255, 0.025),
+            0 0 0 70px rgba(255, 255, 255, 0.018);
         }
 
-        .hero-glow-2 {
-          width: 180px;
-          height: 180px;
+        .hero-accent-b {
+          width: 160px;
+          height: 160px;
           left: -90px;
-          bottom: -120px;
-          background: rgba(75, 118, 255, 0.16);
+          bottom: -110px;
         }
 
-        .hero-compact-head,
-        .hero-compact-grid {
+        .hero-top,
+        .hero-dashboard-grid {
           position: relative;
           z-index: 1;
         }
 
-        .hero-compact-head {
+        .hero-top {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
           gap: 16px;
         }
 
-        .hero-title {
-          color: #a8dcff;
-          font-size: 11px;
+        .hero-eyebrow {
+          color: #9edcff;
+          font-size: 10px;
           font-weight: 900;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
+          letter-spacing: 0.16em;
         }
 
-        .hero-compact-head h2 {
+        .hero-top h2 {
           margin: 7px 0 0;
           color: #ffffff;
-          font-size: clamp(26px, 3vw, 38px);
+          font-size: clamp(27px, 3vw, 40px);
           line-height: 1.05;
-          letter-spacing: -0.03em;
+          letter-spacing: -0.035em;
         }
 
         .hero-report-link {
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 7px;
           padding: 10px 13px;
-          border: 1px solid rgba(255,255,255,.14);
-          border-radius: 12px;
-          color: white;
-          background: rgba(255,255,255,.10);
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          border-radius: 13px;
+          color: #ffffff;
+          background: rgba(255, 255, 255, 0.11);
           font-size: 12px;
           font-weight: 900;
-          white-space: nowrap;
+          backdrop-filter: blur(10px);
         }
 
-        .hero-compact-grid {
+        .hero-dashboard-grid {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: 1.35fr repeat(3, minmax(0, 0.7fr));
           gap: 12px;
           margin-top: 20px;
         }
 
-        .hero-compact-card {
+        .hero-primary,
+        .hero-stat {
           min-width: 0;
-          padding: 15px;
-          border: 1px solid rgba(255,255,255,.13);
-          border-radius: 18px;
-          background: rgba(255,255,255,.09);
-          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: rgba(255, 255, 255, 0.09);
+          backdrop-filter: blur(12px);
         }
 
-        .hero-compact-card span,
-        .hero-compact-card b,
-        .hero-compact-card small {
+        .hero-primary {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 17px;
+          border-radius: 20px;
+        }
+
+        .hero-primary-icon {
+          flex: 0 0 auto;
+          width: 49px;
+          height: 49px;
+          display: grid;
+          place-items: center;
+          border-radius: 16px;
+          color: #072f5b;
+          background: linear-gradient(135deg, #e6f7ff, #9fe1ff);
+          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+        }
+
+        .hero-primary span,
+        .hero-primary b,
+        .hero-primary small,
+        .hero-stat span,
+        .hero-stat b,
+        .hero-stat small {
           display: block;
         }
 
-        .hero-compact-card span {
-          color: rgba(255,255,255,.74);
+        .hero-primary span,
+        .hero-stat span {
+          color: rgba(255, 255, 255, 0.72);
           font-size: 11px;
           font-weight: 700;
         }
 
-        .hero-compact-card b {
-          margin-top: 8px;
+        .hero-primary b {
+          margin-top: 5px;
           color: #ffffff;
-          font-size: 22px;
-          line-height: 1.1;
+          font-size: 25px;
+          line-height: 1.05;
           overflow-wrap: anywhere;
         }
 
-        .hero-compact-card small {
-          margin-top: 6px;
-          color: rgba(255,255,255,.62);
+        .hero-primary small,
+        .hero-stat small {
+          margin-top: 5px;
+          color: rgba(255, 255, 255, 0.58);
           font-size: 10px;
-          line-height: 1.35;
+        }
+
+        .hero-stat {
+          padding: 16px;
+          border-radius: 20px;
+        }
+
+        .hero-stat b {
+          margin-top: 9px;
+          color: #ffffff;
+          font-size: 22px;
+          line-height: 1.05;
+          overflow-wrap: anywhere;
+        }
+
+        .hero-stat-line {
+          height: 6px;
+          margin-top: 13px;
+          overflow: hidden;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.12);
+        }
+
+        .hero-stat-line i {
+          display: block;
+          height: 100%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, #83e5ff, #ffffff);
+        }
+
+        .hero-stat-line.cyan i {
+          background: linear-gradient(90deg, #5cebd2, #b7fff3);
         }
 
         .stats-grid {
@@ -871,8 +946,12 @@ function DashboardContent() {
             grid-template-columns: 1fr;
           }
 
-          .hero-compact-grid {
+          .hero-dashboard-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .hero-primary {
+            grid-column: 1 / -1;
           }
         }
 
@@ -882,7 +961,7 @@ function DashboardContent() {
             border-radius: 24px;
           }
 
-          .hero-compact-head {
+          .hero-top {
             align-items: stretch;
             flex-direction: column;
           }
@@ -918,8 +997,12 @@ function DashboardContent() {
             font-size: 22px;
           }
 
-          .hero-compact-grid {
+          .hero-dashboard-grid {
             grid-template-columns: 1fr;
+          }
+
+          .hero-primary {
+            grid-column: auto;
           }
         }
       `}</style>
