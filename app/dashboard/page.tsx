@@ -127,11 +127,21 @@ function DashboardContent() {
   const maxValue = Math.max(...chartItems.map((item) => item.value), 1);
 
   return (
-    <div className="dashboard-ultra">
-      <div className="dashboard-floating-dots" aria-hidden="true">
-        {Array.from({ length: 18 }).map((_, index) => (
-          <span key={index} className={`dashboard-dot dot-${index + 1}`} />
-        ))}
+    <div className="dashboard-ultra premium-dashboard">
+      <div className="dashboard-premium-bg" aria-hidden="true">
+        <div className="dashboard-glow glow-a" />
+        <div className="dashboard-glow glow-b" />
+        <div className="dashboard-glow glow-c" />
+        <div className="dashboard-floating-dots primary-dots">
+          {Array.from({ length: 18 }).map((_, index) => (
+            <span key={`primary-${index}`} className={`dashboard-dot dot-${index + 1}`} />
+          ))}
+        </div>
+        <div className="dashboard-floating-dots secondary-dots">
+          {Array.from({ length: 12 }).map((_, index) => (
+            <span key={`secondary-${index}`} className={`dashboard-dot soft-dot soft-dot-${index + 1}`} />
+          ))}
+        </div>
       </div>
       <section className="hero-ultra">
         <div className="hero-accent hero-accent-a" />
@@ -419,12 +429,18 @@ function DashboardContent() {
           border-radius: 30px;
         }
 
-        .dashboard-ultra > :not(.dashboard-floating-dots) {
+        .premium-dashboard {
+          background:
+            radial-gradient(circle at top right, rgba(62, 181, 255, 0.14), transparent 26%),
+            radial-gradient(circle at bottom left, rgba(54, 137, 255, 0.1), transparent 28%);
+        }
+
+        .dashboard-ultra > :not(.dashboard-premium-bg) {
           position: relative;
           z-index: 2;
         }
 
-        .dashboard-floating-dots {
+        .dashboard-premium-bg {
           position: absolute;
           inset: 0;
           z-index: 1;
@@ -432,20 +448,54 @@ function DashboardContent() {
           overflow: hidden;
         }
 
+        .dashboard-glow {
+          position: absolute;
+          border-radius: 999px;
+          filter: blur(10px);
+          opacity: 0.38;
+          animation: premiumGlowPulse 8s ease-in-out infinite;
+        }
+
+        .glow-a {
+          width: 280px;
+          height: 280px;
+          top: -60px;
+          right: -40px;
+          background: radial-gradient(circle, rgba(56, 173, 255, 0.28) 0%, rgba(56, 173, 255, 0.08) 50%, transparent 75%);
+        }
+
+        .glow-b {
+          width: 220px;
+          height: 220px;
+          bottom: 12%;
+          left: -50px;
+          background: radial-gradient(circle, rgba(111, 232, 255, 0.18) 0%, rgba(111, 232, 255, 0.06) 52%, transparent 76%);
+          animation-delay: -2s;
+        }
+
+        .glow-c {
+          width: 180px;
+          height: 180px;
+          top: 40%;
+          right: 22%;
+          background: radial-gradient(circle, rgba(144, 219, 255, 0.15) 0%, rgba(144, 219, 255, 0.05) 55%, transparent 78%);
+          animation-delay: -4s;
+        }
+
+        .dashboard-floating-dots {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+        }
+
         .dashboard-dot {
           position: absolute;
           border-radius: 999px;
-          background: radial-gradient(
-            circle at 35% 35%,
-            rgba(184, 236, 255, 0.95) 0%,
-            rgba(112, 211, 255, 0.72) 40%,
-            rgba(29, 149, 235, 0.22) 72%,
-            transparent 100%
-          );
+          background: radial-gradient(circle at 35% 35%, rgba(208, 245, 255, 0.96) 0%, rgba(121, 213, 255, 0.7) 42%, rgba(36, 153, 237, 0.22) 72%, transparent 100%);
           box-shadow:
-            0 0 10px rgba(122, 220, 255, 0.28),
-            0 0 24px rgba(55, 162, 255, 0.12);
-          opacity: 0.45;
+            0 0 12px rgba(154, 230, 255, 0.28),
+            0 0 28px rgba(62, 182, 255, 0.12);
+          opacity: 0.5;
           animation: dashboardDotFloat 10s ease-in-out infinite;
         }
 
@@ -454,8 +504,20 @@ function DashboardContent() {
           position: absolute;
           inset: -10px;
           border-radius: inherit;
-          border: 1px solid rgba(161, 228, 255, 0.14);
-          opacity: 0.7;
+          border: 1px solid rgba(169, 233, 255, 0.12);
+          opacity: 0.8;
+        }
+
+        .soft-dot {
+          opacity: 0.22;
+          filter: blur(0.4px);
+          background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.95) 0%, rgba(164, 231, 255, 0.42) 48%, transparent 100%);
+          animation: dashboardSoftFloat 14s ease-in-out infinite;
+        }
+
+        .soft-dot::after {
+          inset: -14px;
+          border-color: rgba(185, 240, 255, 0.08);
         }
 
         .dot-1  { width: 10px; height: 10px; top: 7%;  left: 6%;  animation-duration: 8s;  }
@@ -477,26 +539,55 @@ function DashboardContent() {
         .dot-17 { width: 17px; height: 17px; top: 79%; left: 68%; animation-duration: 11.8s; animation-delay: -3.1s; }
         .dot-18 { width: 10px; height: 10px; top: 86%; left: 84%; animation-duration: 8.9s; animation-delay: -4.4s; }
 
+        .soft-dot-1  { width: 6px;  height: 6px;  top: 6%;  left: 24%; animation-delay: -1s; }
+        .soft-dot-2  { width: 5px;  height: 5px;  top: 19%; left: 72%; animation-delay: -3s; }
+        .soft-dot-3  { width: 7px;  height: 7px;  top: 22%; left: 38%; animation-delay: -6s; }
+        .soft-dot-4  { width: 4px;  height: 4px;  top: 28%; left: 56%; animation-delay: -4s; }
+        .soft-dot-5  { width: 6px;  height: 6px;  top: 48%; left: 16%; animation-delay: -2.5s; }
+        .soft-dot-6  { width: 5px;  height: 5px;  top: 54%; left: 82%; animation-delay: -5.5s; }
+        .soft-dot-7  { width: 6px;  height: 6px;  top: 61%; left: 35%; animation-delay: -3.4s; }
+        .soft-dot-8  { width: 4px;  height: 4px;  top: 66%; left: 58%; animation-delay: -7s; }
+        .soft-dot-9  { width: 7px;  height: 7px;  top: 73%; left: 74%; animation-delay: -2.2s; }
+        .soft-dot-10 { width: 5px;  height: 5px;  top: 81%; left: 14%; animation-delay: -5.1s; }
+        .soft-dot-11 { width: 4px;  height: 4px;  top: 87%; left: 63%; animation-delay: -1.8s; }
+        .soft-dot-12 { width: 6px;  height: 6px;  top: 90%; left: 90%; animation-delay: -4.8s; }
+
+        @keyframes premiumGlowPulse {
+          0%, 100% { transform: scale(1) translate3d(0, 0, 0); opacity: 0.28; }
+          50% { transform: scale(1.08) translate3d(0, -8px, 0); opacity: 0.45; }
+        }
+
         @keyframes dashboardDotFloat {
-          0%,
-          100% {
+          0%, 100% {
             transform: translate3d(0, 0, 0) scale(0.95);
             opacity: 0.35;
           }
-
           25% {
             transform: translate3d(10px, -18px, 0) scale(1.15);
             opacity: 0.7;
           }
-
           50% {
             transform: translate3d(-8px, -28px, 0) scale(1.02);
             opacity: 0.95;
           }
-
           75% {
             transform: translate3d(12px, -12px, 0) scale(1.12);
             opacity: 0.58;
+          }
+        }
+
+        @keyframes dashboardSoftFloat {
+          0%, 100% {
+            transform: translate3d(0, 0, 0) scale(1);
+            opacity: 0.18;
+          }
+          30% {
+            transform: translate3d(8px, -10px, 0) scale(1.1);
+            opacity: 0.32;
+          }
+          60% {
+            transform: translate3d(-5px, -18px, 0) scale(0.95);
+            opacity: 0.22;
           }
         }
 
@@ -1358,6 +1449,7 @@ function DashboardContent() {
           .hero-ultra,
           .hero-wave,
           .hero-particle,
+          .dashboard-glow,
           .dashboard-dot,
           .hero-primary-icon,
           .hero-stat-line i,
