@@ -8,24 +8,7 @@ import {
   EyeOff,
   ShieldCheck,
 } from 'lucide-react';
-
-type UsuarioConfig = {
-  id: string;
-  nombre: string;
-  correo: string;
-  contrasena: string;
-  rol: string;
-  activo: boolean;
-  proyectos: string[];
-  modulos: string[];
-  acciones: string[];
-};
-
-type ConfiguracionGuardada = {
-  usuarios?: UsuarioConfig[];
-};
-
-const CONFIG_STORAGE_KEY = 'construplata-configuracion-v2';
+import { supabase } from '@/lib/supabase';
 
 const frases = [
   {
@@ -71,108 +54,85 @@ export default function Login() {
     };
   }, []);
 
-  function getUsuariosGuardados(): UsuarioConfig[] {
-    try {
-      const raw = localStorage.getItem(CONFIG_STORAGE_KEY);
+  useEffect(() => {
+    const revisarSesion = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (!raw) return [];
+      if (session?.user) {
+        localStorage.setItem('cp-auth', '1');
+        router.replace('/dashboard');
+      }
+    };
 
-      const config = JSON.parse(raw) as ConfiguracionGuardada;
+    revisarSesion();
+  }, [router]);
 
-      return Array.isArray(config.usuarios)
-        ? config.usuarios
-        : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function guardarSesion(usuario: UsuarioConfig) {
-    localStorage.setItem('cp-auth', '1');
-
-    localStorage.setItem(
-      'cp-user',
-      JSON.stringify({
-        id: usuario.id,
-        nombre: usuario.nombre,
-        correo: usuario.correo,
-        rol: usuario.rol,
-        proyectos: usuario.proyectos || [],
-        modulos: usuario.modulos || [],
-        acciones: usuario.acciones || [],
-      })
-    );
-  }
-
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     const correoIngresado = email.trim().toLowerCase();
-    const contrasenaIngresada = password;
 
-    if (!correoIngresado || !contrasenaIngresada) {
+    if (!correoIngresado || !password) {
       setError('Completa el correo y la contraseña.');
       setLoading(false);
       return;
     }
 
-    const esAdminPrincipal =
-      correoIngresado === 'admin@construplata.com' &&
-      contrasenaIngresada === 'Admin123*';
-
-    if (esAdminPrincipal) {
-      guardarSesion({
-        id: 'admin-principal',
-        nombre: 'Juan Carlos',
-        correo: 'admin@construplata.com',
-        contrasena: '',
-        rol: 'Administrador',
-        activo: true,
-        proyectos: ['Todos'],
-        modulos: ['Todos'],
-        acciones: ['Todos'],
+    const { data, error: authError } =
+      await supabase.auth.signInWithPassword({
+        email: correoIngresado,
+        password,
       });
 
-      router.push('/dashboard');
-      return;
-    }
-
-    const usuarios = getUsuariosGuardados();
-
-    const usuario = usuarios.find(
-      (item) =>
-        item.correo?.trim().toLowerCase() === correoIngresado
-    );
-
-    if (!usuario) {
-      setError('No existe un usuario registrado con ese correo.');
-      setLoading(false);
-      return;
-    }
-
-    if (!usuario.activo) {
-      setError('Este usuario está desactivado. Contacta al administrador.');
-      setLoading(false);
-      return;
-    }
-
-    if (!usuario.contrasena) {
-      setError(
-        'Este usuario no tiene una contraseña configurada. Edítalo o créalo nuevamente.'
-      );
-      setLoading(false);
-      return;
-    }
-
-    if (usuario.contrasena !== contrasenaIngresada) {
+    if (authError || !data.user) {
       setError('Correo o contraseña incorrectos.');
       setLoading(false);
       return;
     }
 
-    guardarSesion(usuario);
+    const { data: perfil, error: perfilError } =
+      await supabase
+        .from('profiles')
+        .select(
+          'id,nombre,correo,rol,activo,proyectos,modulos,acciones'
+        )
+        .eq('id', data.user.id)
+        .single();
+
+    if (perfilError || !perfil) {
+      await supabase.auth.signOut();
+      setError('No se encontró el perfil de este usuario.');
+      setLoading(false);
+      return;
+    }
+
+    if (!perfil.activo) {
+      await supabase.auth.signOut();
+      setError(
+        'Este usuario está desactivado. Contacta al administrador.'
+      );
+      setLoading(false);
+      return;
+    }
+
+    localStorage.setItem('cp-auth', '1');
+    localStorage.setItem(
+      'cp-user',
+      JSON.stringify({
+        id: perfil.id,
+        nombre: perfil.nombre,
+        correo: perfil.correo,
+        rol: perfil.rol,
+        proyectos: perfil.proyectos || [],
+        modulos: perfil.modulos || [],
+        acciones: perfil.acciones || [],
+      })
+    );
+
     router.push('/dashboard');
   }
 
@@ -395,6 +355,70 @@ export default function Login() {
             font-size: 18px !important;
           }
         }
+
+        @media (max-width: 768px) {
+          .login-page {
+            min-height: 100dvh;
+            display: block !important;
+          }
+
+          .login-showcase {
+            min-height: 230px !important;
+            padding: 22px 20px 28px !important;
+          }
+
+          .showcase-copy {
+            display: none !important;
+          }
+
+          .showcase-foot {
+            display: none !important;
+          }
+
+          .showcase-brand {
+            justify-content: center;
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+          }
+
+          .showcase-brand img {
+            width: 112px !important;
+            height: 112px !important;
+          }
+
+          .showcase-brand span {
+            font-size: 21px !important;
+          }
+
+          .login-panel {
+            min-height: calc(100dvh - 230px) !important;
+            padding: 0 14px 28px !important;
+            align-items: flex-start !important;
+          }
+
+          .login-card {
+            width: 100% !important;
+            max-width: 460px !important;
+            margin: -22px auto 0 !important;
+            padding: 26px 20px !important;
+            border-radius: 24px !important;
+          }
+
+          .login-card h2 {
+            font-size: 25px !important;
+          }
+
+          .login-card input {
+            min-height: 50px;
+            font-size: 16px;
+          }
+
+          .login-button {
+            min-height: 52px;
+          }
+        }
+
       `}</style>
     </div>
   );
