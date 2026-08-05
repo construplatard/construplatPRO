@@ -4,17 +4,17 @@ import Link from 'next/link';
 import AppShell from '../../components/AppShell';
 import { useData } from '../../components/DataProvider';
 import {
+  Activity,
   ArrowUpRight,
+  BadgeDollarSign,
   BarChart3,
   BriefcaseBusiness,
+  CalendarRange,
   CircleDollarSign,
   FileText,
   NotebookPen,
   ReceiptText,
-  TrendingUp,
   WalletCards,
-  Activity,
-  Layers3,
 } from 'lucide-react';
 
 type Cotizacion = {
@@ -23,8 +23,8 @@ type Cotizacion = {
   clienteId: string;
   proyecto: string;
   monto: number;
-  estado: string;
   total?: number;
+  estado: string;
 };
 
 const money = (value: number) =>
@@ -32,16 +32,15 @@ const money = (value: number) =>
     style: 'currency',
     currency: 'DOP',
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(value || 0);
 
 const compactMoney = (value: number) =>
   new Intl.NumberFormat('es-DO', {
     notation: 'compact',
     maximumFractionDigits: 1,
-  }).format(value);
+  }).format(value || 0);
 
-const normalizar = (value: string | undefined) =>
-  String(value || '').trim().toLowerCase();
+const normalizar = (value?: string) => String(value || '').trim().toLowerCase();
 
 export default function DashboardPage() {
   return (
@@ -54,345 +53,231 @@ export default function DashboardPage() {
 function DashboardContent() {
   const { data } = useData();
 
-  const cotizaciones = data.cotizaciones as Cotizacion[];
+  const cotizaciones = (data.cotizaciones || []) as Cotizacion[];
 
   const proyectos = cotizaciones
     .filter((cotizacion) => normalizar(cotizacion.estado) === 'aprobada')
     .map((cotizacion) => {
-      const id = `pro-${cotizacion.id}`;
+      const proyectoId = `pro-${cotizacion.id}`;
 
-      const bitacoras = data.bitacoras
+      const bitacoras = (data.bitacoras || [])
         .filter(
           (bitacora) =>
-            bitacora.proyectoId === id ||
+            bitacora.proyectoId === proyectoId ||
             bitacora.proyectoId === cotizacion.id
         )
         .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
 
-      const avance = bitacoras.length
-        ? Number(bitacoras[0].avance || 0)
-        : 0;
-
-      const movimientos = data.movimientos.filter(
+      const movimientos = (data.movimientos || []).filter(
         (movimiento) =>
-          movimiento.proyectoId === id ||
+          movimiento.proyectoId === proyectoId ||
           movimiento.proyectoId === cotizacion.id
       );
 
       const cobrado = movimientos
         .filter((movimiento) => movimiento.tipo === 'cobro')
-        .reduce(
-          (total, movimiento) =>
-            total + Number(movimiento.monto || 0),
-          0
-        );
+        .reduce((acc, item) => acc + Number(item.monto || 0), 0);
 
-      const gastos = movimientos
+      const gastado = movimientos
         .filter((movimiento) => movimiento.tipo === 'gasto')
-        .reduce(
-          (total, movimiento) =>
-            total + Number(movimiento.monto || 0),
-          0
-        );
+        .reduce((acc, item) => acc + Number(item.monto || 0), 0);
 
-      const monto = Number(
-        cotizacion.total ?? cotizacion.monto ?? 0
-      );
-
-      const balance = Math.max(monto - cobrado, 0);
-
-      const avanceFinanciero =
-        monto > 0
-          ? Math.min((cobrado / monto) * 100, 100)
-          : 0;
+      const monto = Number(cotizacion.total ?? cotizacion.monto ?? 0);
+      const avanceFisico = bitacoras.length ? Number(bitacoras[0].avance || 0) : 0;
+      const pendiente = Math.max(monto - cobrado, 0);
+      const avanceFinanciero = monto > 0 ? Math.min((cobrado / monto) * 100, 100) : 0;
 
       return {
-        id,
-        nombre: cotizacion.proyecto,
-        numero: cotizacion.numero,
+        id: proyectoId,
+        nombre: cotizacion.proyecto || 'Proyecto sin nombre',
+        numero: cotizacion.numero || '',
         monto,
-        avance,
         cobrado,
-        gastos,
-        balance,
+        gastado,
+        pendiente,
+        avanceFisico,
         avanceFinanciero,
-        activo: !(avance >= 100 && balance <= 0),
+        activo: !(avanceFisico >= 100 && pendiente <= 0),
       };
     });
 
-  const activos = proyectos.filter((proyecto) => proyecto.activo);
-
-  const contratado = proyectos.reduce(
-    (total, proyecto) => total + proyecto.monto,
-    0
-  );
-
-  const cobrado = proyectos.reduce(
-    (total, proyecto) => total + proyecto.cobrado,
-    0
-  );
-
-  const gastos = proyectos.reduce(
-    (total, proyecto) => total + proyecto.gastos,
-    0
-  );
-
-  const resultado = cobrado - gastos;
-  const balance = Math.max(contratado - cobrado, 0);
-
+  const activos = proyectos.filter((item) => item.activo);
+  const contratado = proyectos.reduce((acc, item) => acc + item.monto, 0);
+  const cobrado = proyectos.reduce((acc, item) => acc + item.cobrado, 0);
+  const gastado = proyectos.reduce((acc, item) => acc + item.gastado, 0);
+  const pendiente = Math.max(contratado - cobrado, 0);
+  const utilidad = cobrado - gastado;
   const avancePromedio = activos.length
     ? Math.round(
-        activos.reduce(
-          (total, proyecto) =>
-            total + Number(proyecto.avance || 0),
-          0
-        ) / activos.length
+        activos.reduce((acc, item) => acc + Number(item.avanceFisico || 0), 0) /
+          activos.length
       )
     : 0;
 
   const financieroPromedio = activos.length
     ? Math.round(
-        activos.reduce(
-          (total, proyecto) =>
-            total + Number(proyecto.avanceFinanciero || 0),
-          0
-        ) / activos.length
+        activos.reduce((acc, item) => acc + Number(item.avanceFinanciero || 0), 0) /
+          activos.length
       )
     : 0;
 
-  const maxChartValue = Math.max(
-    contratado,
-    cobrado,
-    gastos,
-    balance,
-    1
-  );
-
   const chartItems = [
-    { label: 'Contratado', value: contratado },
-    { label: 'Cobrado', value: cobrado },
-    { label: 'Gastos', value: gastos },
-    { label: 'Pendiente', value: balance },
+    { label: 'Contratado', value: contratado, className: 'c1' },
+    { label: 'Cobrado', value: cobrado, className: 'c2' },
+    { label: 'Gastos', value: gastado, className: 'c3' },
+    { label: 'Pendiente', value: pendiente, className: 'c4' },
   ];
 
-  const acciones = [
-    {
-      titulo: 'Nueva cotización',
-      texto: 'Crear propuesta',
-      href: '/cotizaciones',
-      icono: FileText,
-    },
-    {
-      titulo: 'Nueva bitácora',
-      texto: 'Registrar avance',
-      href: '/bitacoras',
-      icono: NotebookPen,
-    },
-    {
-      titulo: 'Registrar cobro',
-      texto: 'Actualizar ingreso',
-      href: '/cobros',
-      icono: WalletCards,
-    },
-  ];
+  const maxValue = Math.max(...chartItems.map((item) => item.value), 1);
 
   return (
-    <div className="executive-dashboard">
-      <section className="hero">
+    <div className="dashboard-premium">
+      <section className="hero-premium">
         <div className="hero-copy">
-          <span className="hero-kicker">
-            CONSTRUPLATA PRO · PANEL EJECUTIVO
-          </span>
-
-          <h2>
-            Visión completa de tus proyectos,
-            <em> finanzas y avances.</em>
-          </h2>
-
+          <span className="eyebrow">PANEL PRINCIPAL</span>
+          <h2>Dashboard ejecutivo de CONSTRUPLATA</h2>
           <p>
-            Todo lo importante de la operación en una vista rápida,
-            moderna y lista para computadora o teléfono.
+            Un resumen más moderno, visual y claro de tus proyectos, cobros,
+            gastos y avances.
           </p>
 
-          <div className="hero-metrics">
+          <div className="hero-tags">
+            <span>Proyectos</span>
+            <span>Finanzas</span>
+            <span>Bitácoras</span>
+            <span>Reportes</span>
+          </div>
+        </div>
+
+        <div className="hero-highlight">
+          <div className="hero-highlight-card">
+            <Activity size={22} />
+            <small>Resultado provisional</small>
+            <strong>{money(utilidad)}</strong>
+            <span>{money(pendiente)} pendiente por cobrar</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="stats-grid">
+        <CardStat
+          icon={<BriefcaseBusiness size={22} />}
+          title="Proyectos activos"
+          value={String(activos.length)}
+          subtitle={`${proyectos.length} proyectos totales`}
+          badge="Activos"
+          tone="blue"
+          href="/proyectos"
+        />
+        <CardStat
+          icon={<WalletCards size={22} />}
+          title="Total cobrado"
+          value={money(cobrado)}
+          subtitle={`${money(pendiente)} pendiente`}
+          badge="Cobros"
+          tone="cyan"
+          href="/cobros"
+        />
+        <CardStat
+          icon={<ReceiptText size={22} />}
+          title="Total gastado"
+          value={money(gastado)}
+          subtitle="Control de egresos"
+          badge="Gastos"
+          tone="violet"
+          href="/gastos"
+        />
+        <CardStat
+          icon={<CircleDollarSign size={22} />}
+          title="Balance provisional"
+          value={money(utilidad)}
+          subtitle="Cobros menos gastos"
+          badge="Balance"
+          tone="green"
+          href="/reportes"
+        />
+      </section>
+
+      <section className="main-grid">
+        <article className="panel panel-large finance-panel">
+          <div className="panel-head">
+            <div>
+              <span className="mini-label">VISIÓN FINANCIERA</span>
+              <h3>Comparativo general</h3>
+            </div>
+            <BadgeDollarSign size={22} />
+          </div>
+
+          <div className="mini-resume">
             <div>
               <span>Contratado</span>
               <b>{money(contratado)}</b>
             </div>
-
             <div>
-              <span>Pendiente</span>
-              <b>{money(balance)}</b>
-            </div>
-
-            <div>
-              <span>Avance</span>
-              <b>{avancePromedio}%</b>
-            </div>
-          </div>
-        </div>
-
-        <div className="hero-visual">
-          <div className="hero-ring ring-a" />
-          <div className="hero-ring ring-b" />
-          <div className="hero-result">
-            <Activity size={26} />
-            <span>Resultado provisional</span>
-            <b>{money(resultado)}</b>
-          </div>
-        </div>
-
-        <Link href="/reportes" className="hero-action">
-          Ver reportes
-          <ArrowUpRight size={17} />
-        </Link>
-      </section>
-
-      <section className="kpi-grid">
-        <Link href="/proyectos" className="kpi-card">
-          <div className="kpi-top">
-            <div className="icon-wrap">
-              <BriefcaseBusiness size={21} />
-            </div>
-            <span>Activos</span>
-          </div>
-          <p>Proyectos activos</p>
-          <b>{activos.length}</b>
-          <small>{proyectos.length} proyectos totales</small>
-        </Link>
-
-        <Link href="/cobros" className="kpi-card">
-          <div className="kpi-top">
-            <div className="icon-wrap">
-              <WalletCards size={21} />
-            </div>
-            <span>Cobros</span>
-          </div>
-          <p>Total cobrado</p>
-          <b>{money(cobrado)}</b>
-          <small>{money(balance)} pendiente</small>
-        </Link>
-
-        <Link href="/gastos" className="kpi-card">
-          <div className="kpi-top">
-            <div className="icon-wrap">
-              <ReceiptText size={21} />
-            </div>
-            <span>Gastos</span>
-          </div>
-          <p>Total gastado</p>
-          <b>{money(gastos)}</b>
-          <small>Control de egresos</small>
-        </Link>
-
-        <Link href="/reportes" className="kpi-card featured">
-          <div className="kpi-top">
-            <div className="icon-wrap">
-              <CircleDollarSign size={21} />
-            </div>
-            <span>Balance</span>
-          </div>
-          <p>Resultado provisional</p>
-          <b>{money(resultado)}</b>
-          <small>Cobros menos gastos</small>
-        </Link>
-      </section>
-
-      <section className="charts-layout">
-        <article className="panel finance-panel">
-          <div className="panel-head">
-            <div>
-              <span>FINANZAS</span>
-              <h3>Panorama financiero</h3>
-            </div>
-            <BarChart3 size={22} />
-          </div>
-
-          <div className="chart-summary">
-            <div>
-              <span>Total contratado</span>
-              <b>{money(contratado)}</b>
+              <span>Cobrado</span>
+              <b>{money(cobrado)}</b>
             </div>
             <div>
-              <span>Disponible</span>
-              <b>{money(balance)}</b>
+              <span>Gastado</span>
+              <b>{money(gastado)}</b>
             </div>
           </div>
 
-          <div className="bar-chart">
+          <div className="bars-wrap">
             {chartItems.map((item) => {
-              const height = Math.max(
-                10,
-                Math.round((item.value / maxChartValue) * 100)
-              );
-
+              const height = Math.max(14, Math.round((item.value / maxValue) * 100));
               return (
-                <div className="bar-column" key={item.label}>
-                  <div className="bar-value">
-                    {compactMoney(item.value)}
+                <div className="bar-col" key={item.label}>
+                  <span className="bar-value">{compactMoney(item.value)}</span>
+                  <div className="bar-base">
+                    <i className={item.className} style={{ height: `${height}%` }} />
                   </div>
-
-                  <div className="bar-track">
-                    <i style={{ height: `${height}%` }} />
-                  </div>
-
-                  <span>{item.label}</span>
+                  <small>{item.label}</small>
                 </div>
               );
             })}
           </div>
         </article>
 
-        <article className="panel progress-panel">
+        <article className="panel panel-side progress-panel">
           <div className="panel-head">
             <div>
-              <span>OPERACIONES</span>
-              <h3>Avance promedio</h3>
+              <span className="mini-label">AVANCES</span>
+              <h3>Indicadores clave</h3>
             </div>
-            <TrendingUp size={22} />
+            <BarChart3 size={22} />
           </div>
 
-          <div className="donuts">
-            <ProgressDonut
-              value={avancePromedio}
-              label="Avance físico"
-              className="physical"
-            />
-
-            <ProgressDonut
-              value={financieroPromedio}
+          <div className="ring-grid">
+            <RingPercent label="Avance físico" value={avancePromedio} color="blue" />
+            <RingPercent
               label="Avance financiero"
-              className="financial"
+              value={financieroPromedio}
+              color="green"
             />
           </div>
 
-          <div className="difference-card">
-            <span>Diferencia actual</span>
-            <b>
-              {Math.abs(avancePromedio - financieroPromedio)}%
-            </b>
-          </div>
-
-          <div className="pulse-line">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
+          <div className="line-kpis">
+            <div>
+              <span>Cotizaciones aprobadas</span>
+              <b>{proyectos.length}</b>
+            </div>
+            <div>
+              <span>Disponible por cobrar</span>
+              <b>{money(pendiente)}</b>
+            </div>
           </div>
         </article>
       </section>
 
-      <section className="bottom-layout">
-        <article className="panel projects-panel">
+      <section className="main-grid">
+        <article className="panel panel-large">
           <div className="panel-head">
             <div>
-              <span>PROYECTOS ACTIVOS</span>
-              <h3>Seguimiento rápido</h3>
+              <span className="mini-label">SEGUIMIENTO</span>
+              <h3>Proyectos activos</h3>
             </div>
-
-            <Link href="/proyectos">
+            <Link href="/proyectos" className="panel-link">
               Ver todos
               <ArrowUpRight size={15} />
             </Link>
@@ -400,791 +285,560 @@ function DashboardContent() {
 
           <div className="project-list">
             {activos.length ? (
-              activos.slice(0, 4).map((proyecto) => (
-                <Link
-                  href="/proyectos"
-                  className="project-row"
-                  key={proyecto.id}
-                >
-                  <div className="project-title">
+              activos.slice(0, 5).map((item) => (
+                <Link href="/proyectos" key={item.id} className="project-item">
+                  <div className="project-left">
                     <div className="project-icon">
-                      <Layers3 size={18} />
+                      <CalendarRange size={18} />
                     </div>
-
                     <div>
-                      <b>{proyecto.nombre}</b>
-                      <span>
-                        {proyecto.numero.replace('COT-', '#')}
-                      </span>
+                      <b>{item.nombre}</b>
+                      <span>{item.numero}</span>
                     </div>
                   </div>
 
-                  <div className="project-progress">
-                    <div>
+                  <div className="project-middle">
+                    <div className="row-title">
                       <span>Avance</span>
-                      <b>{proyecto.avance}%</b>
+                      <strong>{item.avanceFisico}%</strong>
                     </div>
-
-                    <div className="mini-progress">
-                      <i
-                        style={{
-                          width: `${proyecto.avance}%`,
-                        }}
-                      />
+                    <div className="progress">
+                      <i style={{ width: `${item.avanceFisico}%` }} />
                     </div>
                   </div>
 
-                  <div className="project-balance">
+                  <div className="project-right">
                     <span>Balance</span>
-                    <b>{money(proyecto.balance)}</b>
+                    <b>{money(item.pendiente)}</b>
                   </div>
                 </Link>
               ))
             ) : (
-              <div className="empty-dashboard">
-                No hay proyectos activos.
-              </div>
+              <div className="empty-state">No hay proyectos activos por ahora.</div>
             )}
           </div>
         </article>
 
-        <article className="panel quick-panel">
+        <article className="panel panel-side">
           <div className="panel-head">
             <div>
-              <span>ACCESOS RÁPIDOS</span>
+              <span className="mini-label">ACCESOS RÁPIDOS</span>
               <h3>Crear y registrar</h3>
             </div>
+            <FileText size={20} />
           </div>
 
-          <div className="quick-list">
-            {acciones.map((accion) => {
-              const Icon = accion.icono;
-
-              return (
-                <Link
-                  key={accion.titulo}
-                  href={accion.href}
-                  className="quick-item"
-                >
-                  <div className="quick-icon">
-                    <Icon size={19} />
-                  </div>
-
-                  <div>
-                    <b>{accion.titulo}</b>
-                    <span>{accion.texto}</span>
-                  </div>
-
-                  <ArrowUpRight size={16} />
-                </Link>
-              );
-            })}
+          <div className="quick-grid">
+            <QuickAction
+              href="/cotizaciones"
+              icon={<FileText size={20} />}
+              title="Nueva cotización"
+              text="Crear propuesta"
+            />
+            <QuickAction
+              href="/bitacoras"
+              icon={<NotebookPen size={20} />}
+              title="Nueva bitácora"
+              text="Registrar avance"
+            />
+            <QuickAction
+              href="/cobros"
+              icon={<WalletCards size={20} />}
+              title="Registrar cobro"
+              text="Actualizar ingreso"
+            />
           </div>
         </article>
       </section>
 
       <style jsx>{`
-        .executive-dashboard {
+        .dashboard-premium {
           display: grid;
           gap: 18px;
         }
 
-        .hero {
+        .hero-premium {
           position: relative;
           overflow: hidden;
-          min-height: 250px;
           display: grid;
-          grid-template-columns: 1.35fr 0.65fr auto;
+          grid-template-columns: 1.25fr 0.75fr;
+          gap: 20px;
           align-items: center;
-          gap: 26px;
-          padding: 30px 32px;
+          padding: 28px;
           border-radius: 28px;
-          color: white;
+          color: #fff;
           background:
-            radial-gradient(
-              circle at 85% 20%,
-              rgba(55, 203, 255, 0.35),
-              transparent 28%
-            ),
-            radial-gradient(
-              circle at 10% 110%,
-              rgba(71, 86, 255, 0.48),
-              transparent 42%
-            ),
-            linear-gradient(
-              135deg,
-              #031a35 0%,
-              #06477e 52%,
-              #0c7db7 100%
-            );
-          box-shadow: 0 28px 70px rgba(4, 54, 100, 0.28);
+            radial-gradient(circle at 85% 15%, rgba(70, 180, 255, 0.4), transparent 22%),
+            radial-gradient(circle at 10% 100%, rgba(40, 105, 255, 0.35), transparent 32%),
+            linear-gradient(135deg, #03162b 0%, #063767 48%, #0a6cb0 100%);
+          box-shadow: 0 26px 60px rgba(3, 44, 92, 0.24);
         }
 
-        .hero::before {
+        .hero-premium::after {
           content: '';
           position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(
-              rgba(255,255,255,.035) 1px,
-              transparent 1px
-            ),
-            linear-gradient(
-              90deg,
-              rgba(255,255,255,.035) 1px,
-              transparent 1px
-            );
-          background-size: 28px 28px;
-          mask-image: linear-gradient(to right, #000, transparent 88%);
+          right: -120px;
+          top: -90px;
+          width: 320px;
+          height: 320px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.06);
         }
 
         .hero-copy,
-        .hero-visual,
-        .hero-action {
+        .hero-highlight {
           position: relative;
-          z-index: 2;
+          z-index: 1;
         }
 
-        .hero-kicker {
+        .eyebrow {
+          display: inline-block;
           font-size: 11px;
           font-weight: 900;
           letter-spacing: 0.16em;
-          color: #a9dcff;
+          color: #a8dbff;
         }
 
-        .hero h2 {
-          max-width: 700px;
-          margin: 14px 0 12px;
-          font-size: clamp(38px, 4vw, 64px);
-          line-height: 0.98;
-          letter-spacing: -0.045em;
+        .hero-premium h2 {
+          margin: 10px 0 10px;
+          font-size: clamp(30px, 4vw, 48px);
+          line-height: 1.02;
+          letter-spacing: -0.03em;
         }
 
-        .hero h2 em {
-          display: block;
-          font-style: normal;
-          color: #9cd8ff;
-        }
-
-        .hero p {
-          max-width: 620px;
+        .hero-premium p {
           margin: 0;
-          color: rgba(255,255,255,.75);
+          max-width: 720px;
+          color: rgba(255, 255, 255, 0.82);
           line-height: 1.6;
         }
 
-        .hero-metrics {
+        .hero-tags {
           display: flex;
           flex-wrap: wrap;
           gap: 10px;
-          margin-top: 22px;
+          margin-top: 18px;
         }
 
-        .hero-metrics > div {
-          min-width: 135px;
-          padding: 11px 13px;
-          border: 1px solid rgba(255,255,255,.14);
-          border-radius: 14px;
-          background: rgba(255,255,255,.08);
-          backdrop-filter: blur(12px);
-        }
-
-        .hero-metrics span,
-        .hero-metrics b {
-          display: block;
-        }
-
-        .hero-metrics span {
-          font-size: 10px;
-          opacity: .7;
-        }
-
-        .hero-metrics b {
-          margin-top: 4px;
-          font-size: 15px;
-        }
-
-        .hero-visual {
-          min-height: 180px;
-          display: grid;
-          place-items: center;
-        }
-
-        .hero-ring {
-          position: absolute;
-          border-radius: 50%;
-          border: 1px solid rgba(255,255,255,.14);
-        }
-
-        .ring-a {
-          width: 180px;
-          height: 180px;
-        }
-
-        .ring-b {
-          width: 130px;
-          height: 130px;
-        }
-
-        .hero-result {
-          width: 145px;
-          height: 145px;
-          display: grid;
-          place-items: center;
-          align-content: center;
-          gap: 7px;
-          border: 1px solid rgba(255,255,255,.16);
-          border-radius: 50%;
-          background: rgba(255,255,255,.1);
-          backdrop-filter: blur(14px);
-          text-align: center;
-        }
-
-        .hero-result span {
-          font-size: 10px;
-          opacity: .72;
-        }
-
-        .hero-result b {
-          font-size: 17px;
-          max-width: 120px;
-          overflow-wrap: anywhere;
-        }
-
-        .hero-action {
-          align-self: end;
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          padding: 11px 13px;
-          border-radius: 13px;
-          background: rgba(255,255,255,.1);
-          color: white;
+        .hero-tags span {
+          padding: 8px 12px;
+          border-radius: 999px;
           font-size: 12px;
-          font-weight: 900;
+          font-weight: 700;
+          background: rgba(255, 255, 255, 0.12);
+          border: 1px solid rgba(255, 255, 255, 0.12);
         }
 
-        .kpi-grid {
+        .hero-highlight {
+          display: flex;
+          justify-content: flex-end;
+        }
+
+        .hero-highlight-card {
+          width: 100%;
+          max-width: 280px;
+          display: grid;
+          gap: 8px;
+          padding: 20px;
+          border-radius: 22px;
+          background: rgba(255, 255, 255, 0.12);
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          backdrop-filter: blur(14px);
+        }
+
+        .hero-highlight-card small {
+          color: rgba(255, 255, 255, 0.78);
+          font-size: 12px;
+        }
+
+        .hero-highlight-card strong {
+          font-size: 28px;
+          line-height: 1;
+        }
+
+        .hero-highlight-card span {
+          color: rgba(255, 255, 255, 0.75);
+          font-size: 12px;
+        }
+
+        .stats-grid {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 12px;
+          gap: 14px;
         }
 
-        .kpi-card {
-          min-width: 0;
-          padding: 18px;
-          border: 1px solid var(--line);
-          border-radius: 20px;
-          background: var(--card);
-          box-shadow: var(--soft-shadow);
-          transition: transform .2s ease, box-shadow .2s ease;
-        }
-
-        .kpi-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 16px 36px rgba(23,105,224,.12);
-        }
-
-        .kpi-card.featured {
-          color: white;
-          border-color: transparent;
-          background: linear-gradient(135deg, #0a4d98, #1686db);
-        }
-
-        .kpi-top {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-        }
-
-        .icon-wrap {
-          width: 40px;
-          height: 40px;
+        .main-grid {
           display: grid;
-          place-items: center;
-          border-radius: 12px;
-          color: #1769e0;
-          background: #eaf4ff;
-        }
-
-        .kpi-top > span {
-          padding: 6px 9px;
-          border-radius: 999px;
-          color: #1769e0;
-          background: #edf5ff;
-          font-size: 10px;
-          font-weight: 900;
-        }
-
-        .featured .icon-wrap,
-        .featured .kpi-top > span {
-          color: white;
-          background: rgba(255,255,255,.14);
-        }
-
-        .kpi-card p {
-          margin: 17px 0 5px;
-          color: var(--muted);
-          font-size: 12px;
-        }
-
-        .kpi-card > b {
-          display: block;
-          color: var(--text);
-          font-size: 22px;
-          overflow-wrap: anywhere;
-        }
-
-        .kpi-card small {
-          display: block;
-          margin-top: 5px;
-          color: var(--muted);
-        }
-
-        .featured p,
-        .featured small {
-          color: rgba(255,255,255,.74);
-        }
-
-        .featured > b {
-          color: white;
-        }
-
-        .charts-layout,
-        .bottom-layout {
-          display: grid;
+          grid-template-columns: 1.35fr 0.65fr;
           gap: 16px;
         }
 
-        .charts-layout {
-          grid-template-columns: 1.25fr .75fr;
-        }
-
-        .bottom-layout {
-          grid-template-columns: 1.25fr .75fr;
-        }
-
         .panel {
-          padding: 21px;
-          border: 1px solid var(--line);
-          border-radius: 22px;
           background: var(--card);
+          border: 1px solid var(--line);
+          border-radius: 24px;
+          padding: 20px;
           box-shadow: var(--soft-shadow);
         }
 
         .panel-head {
           display: flex;
-          align-items: center;
           justify-content: space-between;
+          align-items: flex-start;
           gap: 12px;
         }
 
-        .panel-head span {
-          color: #1769e0;
+        .mini-label {
+          display: inline-block;
+          color: #1c78f0;
           font-size: 10px;
           font-weight: 900;
-          letter-spacing: .14em;
+          letter-spacing: 0.15em;
         }
 
         .panel-head h3 {
           margin: 5px 0 0;
           color: var(--text);
+          font-size: 26px;
         }
 
-        .panel-head > a {
+        .panel-link {
           display: inline-flex;
           align-items: center;
-          gap: 5px;
-          color: #1769e0;
-          font-size: 12px;
-          font-weight: 900;
+          gap: 6px;
+          color: #1c78f0;
+          font-size: 13px;
+          font-weight: 800;
         }
 
-        .chart-summary {
+        .mini-resume {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 10px;
           margin-top: 18px;
         }
 
-        .chart-summary > div {
-          padding: 13px;
-          border-radius: 14px;
+        .mini-resume > div {
+          padding: 14px;
           background: var(--surface);
+          border-radius: 16px;
         }
 
-        .chart-summary span,
-        .chart-summary b {
+        .mini-resume span,
+        .mini-resume b {
           display: block;
         }
 
-        .chart-summary span {
-          color: var(--muted);
-          font-size: 10px;
-        }
-
-        .chart-summary b {
-          margin-top: 4px;
-          color: var(--text);
-        }
-
-        .bar-chart {
-          height: 250px;
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 16px;
-          align-items: end;
-          margin-top: 20px;
-        }
-
-        .bar-column {
-          height: 100%;
-          display: grid;
-          grid-template-rows: auto 1fr auto;
-          gap: 8px;
-          text-align: center;
-        }
-
-        .bar-value {
-          color: var(--muted);
-          font-size: 10px;
-        }
-
-        .bar-track {
-          position: relative;
-          overflow: hidden;
-          border-radius: 12px;
-          background: var(--surface);
-        }
-
-        .bar-track i {
-          position: absolute;
-          inset: auto 0 0;
-          border-radius: 12px;
-          background: linear-gradient(180deg, #27b2ff, #1769e0);
-        }
-
-        .bar-column > span {
+        .mini-resume span {
           color: var(--muted);
           font-size: 11px;
         }
 
-        .donuts {
+        .mini-resume b {
+          margin-top: 6px;
+          color: var(--text);
+          font-size: 18px;
+          line-height: 1.2;
+          overflow-wrap: anywhere;
+        }
+
+        .bars-wrap {
+          margin-top: 22px;
+          height: 260px;
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 16px;
+          align-items: end;
+        }
+
+        .bar-col {
+          display: grid;
+          grid-template-rows: auto 1fr auto;
+          gap: 8px;
+          align-items: end;
+          text-align: center;
+          min-width: 0;
+        }
+
+        .bar-value {
+          font-size: 11px;
+          color: var(--muted);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .bar-base {
+          position: relative;
+          height: 100%;
+          border-radius: 18px;
+          overflow: hidden;
+          background: var(--surface);
+          min-height: 170px;
+        }
+
+        .bar-base i {
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border-radius: 18px;
+        }
+
+        .bar-base i.c1 {
+          background: linear-gradient(180deg, #50d3ff, #1c78f0);
+        }
+
+        .bar-base i.c2 {
+          background: linear-gradient(180deg, #55e8d9, #12a89b);
+        }
+
+        .bar-base i.c3 {
+          background: linear-gradient(180deg, #b18cff, #7752ff);
+        }
+
+        .bar-base i.c4 {
+          background: linear-gradient(180deg, #8ee55d, #43b02a);
+        }
+
+        .bar-col small {
+          color: var(--muted);
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .ring-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
           margin-top: 22px;
         }
 
-        .difference-card {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-top: 18px;
-          padding: 14px;
-          border-radius: 14px;
-          background: var(--surface);
-          color: var(--muted);
-        }
-
-        .difference-card b {
-          color: var(--text);
-          font-size: 20px;
-        }
-
-        .pulse-line {
-          height: 60px;
-          display: flex;
-          align-items: end;
-          justify-content: space-between;
-          gap: 7px;
-          margin-top: 16px;
-        }
-
-        .pulse-line span {
-          flex: 1;
-          border-radius: 999px;
-          background: linear-gradient(180deg, #35c9ff, #1769e0);
-        }
-
-        .pulse-line span:nth-child(1) { height: 22%; }
-        .pulse-line span:nth-child(2) { height: 55%; }
-        .pulse-line span:nth-child(3) { height: 34%; }
-        .pulse-line span:nth-child(4) { height: 76%; }
-        .pulse-line span:nth-child(5) { height: 48%; }
-        .pulse-line span:nth-child(6) { height: 88%; }
-
-        .project-list {
+        .line-kpis {
           display: grid;
           gap: 10px;
-          margin-top: 16px;
+          margin-top: 20px;
         }
 
-        .project-row {
-          display: grid;
-          grid-template-columns: 1.1fr .9fr auto;
-          align-items: center;
-          gap: 14px;
+        .line-kpis > div {
           padding: 14px;
-          border: 1px solid var(--line);
           border-radius: 16px;
           background: var(--surface);
         }
 
-        .project-title {
+        .line-kpis span,
+        .line-kpis b {
+          display: block;
+        }
+
+        .line-kpis span {
+          color: var(--muted);
+          font-size: 11px;
+        }
+
+        .line-kpis b {
+          margin-top: 5px;
+          color: var(--text);
+          font-size: 18px;
+          overflow-wrap: anywhere;
+        }
+
+        .project-list {
+          display: grid;
+          gap: 12px;
+          margin-top: 18px;
+        }
+
+        .project-item {
+          display: grid;
+          grid-template-columns: 1.1fr 1fr auto;
+          gap: 14px;
+          align-items: center;
+          padding: 16px;
+          border-radius: 18px;
+          background: var(--surface);
+          border: 1px solid var(--line);
+        }
+
+        .project-left {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
           min-width: 0;
         }
 
         .project-icon {
-          flex: 0 0 auto;
-          width: 38px;
-          height: 38px;
+          width: 42px;
+          height: 42px;
           display: grid;
           place-items: center;
-          border-radius: 12px;
-          color: #1769e0;
-          background: #eaf4ff;
+          border-radius: 14px;
+          color: #1c78f0;
+          background: #ecf5ff;
+          flex: 0 0 auto;
         }
 
-        .project-title b,
-        .project-title span,
-        .project-progress span,
-        .project-progress b,
-        .project-balance span,
-        .project-balance b {
+        .project-left b,
+        .project-left span,
+        .project-right span,
+        .project-right b {
           display: block;
         }
 
-        .project-title b {
+        .project-left b {
           color: var(--text);
-          font-size: 13px;
+          font-size: 14px;
         }
 
-        .project-title span,
-        .project-progress span,
-        .project-balance span {
-          margin-top: 3px;
+        .project-left span,
+        .project-right span {
+          margin-top: 4px;
           color: var(--muted);
-          font-size: 10px;
+          font-size: 11px;
         }
 
-        .project-progress > div:first-child {
+        .row-title {
           display: flex;
           justify-content: space-between;
-          gap: 10px;
+          gap: 8px;
+          color: var(--muted);
+          font-size: 11px;
+          margin-bottom: 7px;
         }
 
-        .mini-progress {
-          height: 7px;
-          margin-top: 7px;
+        .row-title strong {
+          color: var(--text);
+        }
+
+        .progress {
+          height: 8px;
           overflow: hidden;
           border-radius: 999px;
           background: var(--line);
         }
 
-        .mini-progress i {
+        .progress i {
           display: block;
           height: 100%;
           border-radius: inherit;
-          background: linear-gradient(90deg, #1769e0, #26a8f2);
+          background: linear-gradient(90deg, #1c78f0, #34b6ff);
         }
 
-        .project-balance {
+        .project-right {
           text-align: right;
         }
 
-        .project-balance b {
+        .project-right b {
           margin-top: 4px;
           color: var(--text);
+          font-size: 14px;
+          overflow-wrap: anywhere;
         }
 
-        .quick-list {
+        .quick-grid {
           display: grid;
-          gap: 10px;
-          margin-top: 16px;
+          gap: 12px;
+          margin-top: 18px;
         }
 
-        .quick-item {
-          display: grid;
-          grid-template-columns: auto 1fr auto;
-          align-items: center;
-          gap: 11px;
-          padding: 13px;
-          border: 1px solid var(--line);
-          border-radius: 15px;
-          background: var(--surface);
-        }
-
-        .quick-icon {
-          width: 40px;
-          height: 40px;
-          display: grid;
-          place-items: center;
-          border-radius: 12px;
-          color: #1769e0;
-          background: #eaf4ff;
-        }
-
-        .quick-item b,
-        .quick-item span {
-          display: block;
-        }
-
-        .quick-item b {
-          color: var(--text);
-          font-size: 13px;
-        }
-
-        .quick-item span {
-          margin-top: 3px;
-          color: var(--muted);
-          font-size: 11px;
-        }
-
-        .empty-dashboard {
-          padding: 24px;
-          color: var(--muted);
+        .empty-state {
+          padding: 30px;
           text-align: center;
+          color: var(--muted);
         }
 
-        :global(html[data-theme='dark']) .kpi-card,
-        :global(html[data-theme='dark']) .panel {
-          background: #0e1c30;
+        :global(html[data-theme='dark']) .panel,
+        :global(html[data-theme='dark']) .card-stat {
+          background: #0d1b2f !important;
         }
 
-        :global(html[data-theme='dark']) .project-row,
-        :global(html[data-theme='dark']) .quick-item,
-        :global(html[data-theme='dark']) .chart-summary > div,
-        :global(html[data-theme='dark']) .bar-track,
-        :global(html[data-theme='dark']) .difference-card {
-          background: #0a1728;
+        :global(html[data-theme='dark']) .mini-resume > div,
+        :global(html[data-theme='dark']) .bar-base,
+        :global(html[data-theme='dark']) .line-kpis > div,
+        :global(html[data-theme='dark']) .project-item,
+        :global(html[data-theme='dark']) .quick-action {
+          background: #0a1628 !important;
         }
 
-        @media (max-width: 1000px) {
-          .hero {
-            grid-template-columns: 1fr .55fr;
-          }
+        :global(html[data-theme='dark']) .project-icon {
+          background: rgba(28, 120, 240, 0.16);
+        }
 
-          .hero-action {
-            position: absolute;
-            right: 20px;
-            bottom: 20px;
-          }
-
-          .kpi-grid {
+        @media (max-width: 1100px) {
+          .stats-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
-          .charts-layout,
-          .bottom-layout {
+          .main-grid {
             grid-template-columns: 1fr;
           }
         }
 
-        @media (max-width: 700px) {
-          .executive-dashboard {
-            gap: 13px;
-          }
-
-          .hero {
-            min-height: auto;
+        @media (max-width: 760px) {
+          .hero-premium {
             grid-template-columns: 1fr;
             padding: 20px;
             border-radius: 22px;
           }
 
-          .hero h2 {
-            font-size: 29px;
+          .hero-highlight {
+            justify-content: flex-start;
           }
 
-          .hero p {
-            font-size: 13px;
+          .hero-highlight-card {
+            max-width: none;
           }
 
-          .hero-visual {
-            min-height: 150px;
-          }
-
-          .hero-action {
-            position: relative;
-            right: auto;
-            bottom: auto;
-            width: fit-content;
-          }
-
-          .hero-metrics {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-
-          .hero-metrics > div {
-            min-width: 0;
-          }
-
-          .hero-metrics > div:last-child {
-            grid-column: 1 / -1;
-          }
-
-          .kpi-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-          }
-
-          .kpi-card {
-            padding: 14px;
-          }
-
-          .kpi-card > b {
-            font-size: 17px;
-          }
-
-          .panel {
-            padding: 16px;
-            border-radius: 18px;
-          }
-
-          .bar-chart {
-            height: 210px;
-            gap: 8px;
-          }
-
-          .bar-value {
-            font-size: 8px;
-          }
-
-          .bar-column > span {
-            font-size: 9px;
-          }
-
-          .project-row {
+          .stats-grid {
             grid-template-columns: 1fr;
-            align-items: stretch;
           }
 
-          .project-balance {
+          .mini-resume {
+            grid-template-columns: 1fr;
+          }
+
+          .bars-wrap {
+            gap: 10px;
+            height: 220px;
+          }
+
+          .bar-base {
+            min-height: 140px;
+          }
+
+          .ring-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .project-item {
+            grid-template-columns: 1fr;
             text-align: left;
           }
 
-          .donuts {
-            gap: 6px;
+          .project-right {
+            text-align: left;
+          }
+
+          .panel-head h3 {
+            font-size: 22px;
           }
         }
 
-        @media (max-width: 390px) {
-          .kpi-grid {
+        @media (max-width: 520px) {
+          .ring-grid {
             grid-template-columns: 1fr;
           }
 
-          .hero-metrics {
-            grid-template-columns: 1fr;
+          .bars-wrap {
+            grid-template-columns: repeat(4, minmax(50px, 1fr));
           }
 
-          .hero-metrics > div:last-child {
-            grid-column: auto;
+          .bar-value {
+            font-size: 9px;
+          }
+
+          .bar-col small {
+            font-size: 10px;
           }
         }
       `}</style>
@@ -1192,99 +846,312 @@ function DashboardContent() {
   );
 }
 
-function ProgressDonut({
+function CardStat({
+  icon,
+  title,
+  value,
+  subtitle,
+  badge,
+  tone,
+  href,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  value: string;
+  subtitle: string;
+  badge: string;
+  tone: 'blue' | 'cyan' | 'violet' | 'green';
+  href: string;
+}) {
+  return (
+    <Link href={href} className={`card-stat ${tone}`}>
+      <div className="card-head">
+        <div className="card-icon">{icon}</div>
+        <span className="badge">{badge}</span>
+      </div>
+
+      <div className="card-body">
+        <h4>{title}</h4>
+        <b>{value}</b>
+        <small>{subtitle}</small>
+      </div>
+
+      <style jsx>{`
+        .card-stat {
+          display: grid;
+          gap: 16px;
+          padding: 18px;
+          border-radius: 24px;
+          border: 1px solid var(--line);
+          background: var(--card);
+          box-shadow: var(--soft-shadow);
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .card-stat:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 20px 40px rgba(23, 105, 224, 0.12);
+        }
+
+        .card-head {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .card-icon {
+          width: 54px;
+          height: 54px;
+          display: grid;
+          place-items: center;
+          border-radius: 18px;
+          flex: 0 0 auto;
+        }
+
+        .badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 7px 12px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+
+        .card-body h4 {
+          margin: 0;
+          color: var(--text);
+          font-size: 20px;
+          line-height: 1.15;
+        }
+
+        .card-body b {
+          display: block;
+          margin-top: 14px;
+          color: var(--text);
+          font-size: 26px;
+          line-height: 1.1;
+          overflow-wrap: anywhere;
+        }
+
+        .card-body small {
+          display: block;
+          margin-top: 8px;
+          color: var(--muted);
+          font-size: 13px;
+          line-height: 1.45;
+        }
+
+        .blue .card-icon {
+          color: #1c78f0;
+          background: #eaf4ff;
+        }
+
+        .blue .badge {
+          color: #1c78f0;
+          background: #eef5ff;
+        }
+
+        .cyan .card-icon {
+          color: #0aaec0;
+          background: #e8fbfd;
+        }
+
+        .cyan .badge {
+          color: #0aaec0;
+          background: #ecfeff;
+        }
+
+        .violet .card-icon {
+          color: #7752ff;
+          background: #f2edff;
+        }
+
+        .violet .badge {
+          color: #7752ff;
+          background: #f4f0ff;
+        }
+
+        .green .card-icon {
+          color: #3aa23a;
+          background: #edf9ed;
+        }
+
+        .green .badge {
+          color: #3aa23a;
+          background: #f0fcf0;
+        }
+
+        @media (max-width: 760px) {
+          .card-body h4 {
+            font-size: 18px;
+          }
+
+          .card-body b {
+            font-size: 22px;
+          }
+        }
+      `}</style>
+    </Link>
+  );
+}
+
+function RingPercent({
   value,
   label,
-  className,
+  color,
 }: {
   value: number;
   label: string;
-  className: string;
+  color: 'blue' | 'green';
 }) {
-  const safeValue = Math.max(0, Math.min(value, 100));
+  const safe = Math.max(0, Math.min(100, value));
+  const tone = color === 'green' ? '#14a88f' : '#1c78f0';
 
   return (
-    <div className={`donut-item ${className}`}>
+    <div className="ring-box">
       <div
-        className="donut"
+        className="ring"
         style={{
-          background: `conic-gradient(var(--donut-color) ${
-            safeValue * 3.6
-          }deg, var(--line) 0deg)`,
+          background: `conic-gradient(${tone} ${safe * 3.6}deg, var(--line) 0deg)`,
         }}
       >
-        <div>
-          <b>{safeValue}%</b>
+        <div className="inner">
+          <b>{safe}%</b>
         </div>
       </div>
-
       <span>{label}</span>
 
       <style jsx>{`
-        .donut-item {
+        .ring-box {
           display: grid;
           justify-items: center;
-          gap: 9px;
-          --donut-color: #1769e0;
+          gap: 10px;
+          padding: 14px;
+          border-radius: 18px;
+          background: var(--surface);
         }
 
-        .donut-item.financial {
-          --donut-color: #20a6a0;
-        }
-
-        .donut {
-          width: 120px;
-          height: 120px;
+        .ring {
+          width: 118px;
+          height: 118px;
+          border-radius: 50%;
           display: grid;
           place-items: center;
-          border-radius: 50%;
         }
 
-        .donut > div {
+        .inner {
           width: 84px;
           height: 84px;
+          border-radius: 50%;
           display: grid;
           place-items: center;
-          border-radius: 50%;
           background: var(--card);
         }
 
-        .donut b {
+        .inner b {
           color: var(--text);
           font-size: 22px;
         }
 
-        .donut-item > span {
+        .ring-box span {
           color: var(--muted);
           font-size: 12px;
-          font-weight: 900;
+          font-weight: 700;
           text-align: center;
         }
 
-        :global(html[data-theme='dark']) .donut > div {
-          background: #0e1c30;
-        }
-
-        @media (max-width: 700px) {
-          .donut {
-            width: 98px;
-            height: 98px;
-          }
-
-          .donut > div {
-            width: 69px;
-            height: 69px;
-          }
-
-          .donut b {
-            font-size: 18px;
-          }
-
-          .donut-item > span {
-            font-size: 10px;
-          }
+        :global(html[data-theme='dark']) .inner {
+          background: #0d1b2f;
         }
       `}</style>
     </div>
+  );
+}
+
+function QuickAction({
+  href,
+  icon,
+  title,
+  text,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+}) {
+  return (
+    <Link href={href} className="quick-action">
+      <div className="qa-icon">{icon}</div>
+
+      <div className="qa-copy">
+        <b>{title}</b>
+        <span>{text}</span>
+      </div>
+
+      <ArrowUpRight size={18} className="qa-arrow" />
+
+      <style jsx>{`
+        .quick-action {
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          align-items: center;
+          gap: 12px;
+          padding: 16px;
+          border-radius: 18px;
+          background: var(--surface);
+          border: 1px solid var(--line);
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .quick-action:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 16px 32px rgba(23, 105, 224, 0.1);
+        }
+
+        .qa-icon {
+          width: 48px;
+          height: 48px;
+          display: grid;
+          place-items: center;
+          border-radius: 16px;
+          color: #1c78f0;
+          background: #ebf5ff;
+        }
+
+        .qa-copy b,
+        .qa-copy span {
+          display: block;
+        }
+
+        .qa-copy b {
+          color: var(--text);
+          font-size: 16px;
+          line-height: 1.2;
+        }
+
+        .qa-copy span {
+          margin-top: 5px;
+          color: var(--muted);
+          font-size: 13px;
+        }
+
+        .qa-arrow {
+          color: #1c78f0;
+        }
+
+        @media (max-width: 760px) {
+          .qa-copy b {
+            font-size: 15px;
+          }
+
+          .qa-copy span {
+            font-size: 12px;
+          }
+        }
+      `}</style>
+    </Link>
   );
 }
