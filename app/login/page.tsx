@@ -9,6 +9,24 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
+type UsuarioConfig = {
+  id: string;
+  nombre: string;
+  correo: string;
+  contrasena: string;
+  rol: string;
+  activo: boolean;
+  proyectos: string[];
+  modulos: string[];
+  acciones: string[];
+};
+
+type ConfiguracionGuardada = {
+  usuarios?: UsuarioConfig[];
+};
+
+const CONFIG_STORAGE_KEY = 'construplata-configuracion-v2';
+
 const frases = [
   {
     linea1: 'Planifica con',
@@ -28,12 +46,12 @@ export default function Login() {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
-  
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
   const [error, setError] = useState('');
   const [fraseActual, setFraseActual] = useState(0);
   const [visible, setVisible] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const intervalo = window.setInterval(() => {
@@ -53,20 +71,109 @@ export default function Login() {
     };
   }, []);
 
+  function getUsuariosGuardados(): UsuarioConfig[] {
+    try {
+      const raw = localStorage.getItem(CONFIG_STORAGE_KEY);
+
+      if (!raw) return [];
+
+      const config = JSON.parse(raw) as ConfiguracionGuardada;
+
+      return Array.isArray(config.usuarios)
+        ? config.usuarios
+        : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function guardarSesion(usuario: UsuarioConfig) {
+    localStorage.setItem('cp-auth', '1');
+
+    localStorage.setItem(
+      'cp-user',
+      JSON.stringify({
+        id: usuario.id,
+        nombre: usuario.nombre,
+        correo: usuario.correo,
+        rol: usuario.rol,
+        proyectos: usuario.proyectos || [],
+        modulos: usuario.modulos || [],
+        acciones: usuario.acciones || [],
+      })
+    );
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
+    setError('');
+    setLoading(true);
 
-    if (
-      email.toLowerCase() ===
-        'admin@construplata.com' &&
-      password === 'Admin123*'
-    ) {
-      localStorage.setItem('cp-auth', '1');
+    const correoIngresado = email.trim().toLowerCase();
+    const contrasenaIngresada = password;
+
+    if (!correoIngresado || !contrasenaIngresada) {
+      setError('Completa el correo y la contraseña.');
+      setLoading(false);
+      return;
+    }
+
+    const esAdminPrincipal =
+      correoIngresado === 'admin@construplata.com' &&
+      contrasenaIngresada === 'Admin123*';
+
+    if (esAdminPrincipal) {
+      guardarSesion({
+        id: 'admin-principal',
+        nombre: 'Juan Carlos',
+        correo: 'admin@construplata.com',
+        contrasena: '',
+        rol: 'Administrador',
+        activo: true,
+        proyectos: ['Todos'],
+        modulos: ['Todos'],
+        acciones: ['Todos'],
+      });
+
       router.push('/dashboard');
       return;
     }
 
-    setError('Correo o contraseña incorrectos');
+    const usuarios = getUsuariosGuardados();
+
+    const usuario = usuarios.find(
+      (item) =>
+        item.correo?.trim().toLowerCase() === correoIngresado
+    );
+
+    if (!usuario) {
+      setError('No existe un usuario registrado con ese correo.');
+      setLoading(false);
+      return;
+    }
+
+    if (!usuario.activo) {
+      setError('Este usuario está desactivado. Contacta al administrador.');
+      setLoading(false);
+      return;
+    }
+
+    if (!usuario.contrasena) {
+      setError(
+        'Este usuario no tiene una contraseña configurada. Edítalo o créalo nuevamente.'
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (usuario.contrasena !== contrasenaIngresada) {
+      setError('Correo o contraseña incorrectos.');
+      setLoading(false);
+      return;
+    }
+
+    guardarSesion(usuario);
+    router.push('/dashboard');
   }
 
   const frase = frases[fraseActual];
@@ -158,20 +265,22 @@ export default function Login() {
           <h2>Bienvenido</h2>
 
           <p>
-            Ingresa a tu centro de control empresarial.
+            Ingresa con el correo y la contraseña asignados.
           </p>
 
           <label>
             Correo electrónico
 
-           <input
-  type="email"
-  value={email}
-  onChange={(e) =>
-    setEmail(e.target.value)
-  }
-  placeholder="Ingrese su correo electrónico"
-/>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError('');
+              }}
+              placeholder="Ingrese su correo electrónico"
+              autoComplete="email"
+            />
           </label>
 
           <label>
@@ -179,14 +288,14 @@ export default function Login() {
 
             <div className="password-field">
               <input
-                type={
-                  show ? 'text' : 'password'
-                }
+                type={show ? 'text' : 'password'}
                 value={password}
-                onChange={(e) =>
-                  setPassword(e.target.value)
-                }
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError('');
+                }}
                 placeholder="••••••••"
+                autoComplete="current-password"
               />
 
               <button
@@ -222,8 +331,9 @@ export default function Login() {
           <button
             className="login-button"
             type="submit"
+            disabled={loading}
           >
-            Entrar al sistema
+            {loading ? 'Validando...' : 'Entrar al sistema'}
             <ArrowRight size={20} />
           </button>
 
