@@ -343,6 +343,59 @@ export default function Login() {
           </small>
         </form>
       </section>
+
+      <style jsx global>{`
+        .showcase-brand {
+          display: flex;
+          align-items: center;
+          gap: 22px;
+        }
+
+        .showcase-brand img {
+          width: 132px !important;
+          height: 132px !important;
+          padding: 10px;
+          object-fit: contain;
+          border-radius: 28px !important;
+          background: #ffffff;
+          box-shadow: 0 22px 50px rgba(0, 0, 0, 0.24);
+        }
+
+        .showcase-brand span {
+          font-size: 25px !important;
+          font-weight: 900;
+          letter-spacing: 0.055em;
+        }
+
+        @media (max-width: 900px) {
+          .showcase-brand img {
+            width: 100px !important;
+            height: 100px !important;
+            border-radius: 23px !important;
+          }
+
+          .showcase-brand span {
+            font-size: 21px !important;
+          }
+        }
+
+        @media (max-width: 620px) {
+          .showcase-brand {
+            gap: 14px;
+          }
+
+          .showcase-brand img {
+            width: 82px !important;
+            height: 82px !important;
+            padding: 7px;
+            border-radius: 20px !important;
+          }
+
+          .showcase-brand span {
+            font-size: 18px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
