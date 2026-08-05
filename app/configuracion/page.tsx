@@ -34,6 +34,7 @@ type UsuarioConfig = {
   id: string;
   nombre: string;
   correo: string;
+  contrasena: string;
   rol: string;
   activo: boolean;
   proyectos: string[];
@@ -115,6 +116,7 @@ const initialConfig: ConfiguracionGeneral = {
       id: 'usuario-admin',
       nombre: 'Administrador',
       correo: '',
+      contrasena: 'Admin1234!',
       rol: 'Administrador',
       activo: true,
       proyectos: ['Todos'],
@@ -185,7 +187,19 @@ const loadConfig = (): ConfiguracionGeneral => {
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : initialConfig;
+
+    if (!raw) return initialConfig;
+
+    const saved = JSON.parse(raw) as ConfiguracionGeneral;
+
+    return {
+      ...initialConfig,
+      ...saved,
+      usuarios: (saved.usuarios || []).map((usuario) => ({
+        ...usuario,
+        contrasena: usuario.contrasena || '',
+      })),
+    };
   } catch {
     return initialConfig;
   }
@@ -221,6 +235,8 @@ function Configuraciones() {
   const [userForm, setUserForm] = useState({
     nombre: '',
     correo: '',
+    contrasena: '',
+    confirmarContrasena: '',
     rol: config.roles[0]?.nombre || 'Administrador',
     activo: true,
     proyectos: 'Todos',
@@ -261,12 +277,34 @@ function Configuraciones() {
       return;
     }
 
+    if (userForm.contrasena.length < 6) {
+      window.alert('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    if (userForm.contrasena !== userForm.confirmarContrasena) {
+      window.alert('Las contraseñas no coinciden.');
+      return;
+    }
+
+    const correoExiste = config.usuarios.some(
+      (usuario) =>
+        usuario.correo.trim().toLowerCase() ===
+        userForm.correo.trim().toLowerCase()
+    );
+
+    if (correoExiste) {
+      window.alert('Ya existe un usuario con ese correo.');
+      return;
+    }
+
     const role = config.roles.find((item) => item.nombre === userForm.rol);
 
     const user: UsuarioConfig = {
       id: makeId('usuario'),
       nombre: userForm.nombre.trim(),
       correo: userForm.correo.trim(),
+      contrasena: userForm.contrasena,
       rol: userForm.rol,
       activo: userForm.activo,
       proyectos: userForm.proyectos
@@ -290,6 +328,8 @@ function Configuraciones() {
     setUserForm({
       nombre: '',
       correo: '',
+      contrasena: '',
+      confirmarContrasena: '',
       rol: config.roles[0]?.nombre || 'Administrador',
       activo: true,
       proyectos: 'Todos',
@@ -693,6 +733,11 @@ function Configuraciones() {
                     <span>Proyectos</span>
                     <b>{user.proyectos.join(', ') || 'Sin asignación'}</b>
                   </div>
+
+                  <div>
+                    <span>Contraseña</span>
+                    <b>{user.contrasena ? 'Configurada' : 'No configurada'}</b>
+                  </div>
                 </div>
 
                 <div className="user-actions">
@@ -940,6 +985,38 @@ function Configuraciones() {
                 onChange={(event) =>
                   setUserForm({ ...userForm, correo: event.target.value })
                 }
+              />
+            </label>
+
+            <label>
+              Contraseña
+              <input
+                type="password"
+                value={userForm.contrasena}
+                onChange={(event) =>
+                  setUserForm({
+                    ...userForm,
+                    contrasena: event.target.value,
+                  })
+                }
+                placeholder="Mínimo 6 caracteres"
+                autoComplete="new-password"
+              />
+            </label>
+
+            <label>
+              Confirmar contraseña
+              <input
+                type="password"
+                value={userForm.confirmarContrasena}
+                onChange={(event) =>
+                  setUserForm({
+                    ...userForm,
+                    confirmarContrasena: event.target.value,
+                  })
+                }
+                placeholder="Repite la contraseña"
+                autoComplete="new-password"
               />
             </label>
 
@@ -1287,7 +1364,7 @@ function Configuraciones() {
 
         .user-meta {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 9px;
           margin-top: 14px;
         }
