@@ -1,11 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PageFrame from '@/components/PageFrame';
 import {
   Building2,
   Check,
-  FolderKanban,
   KeyRound,
   ListChecks,
   Plus,
@@ -34,7 +33,6 @@ type UsuarioConfig = {
   id: string;
   nombre: string;
   correo: string;
-  contrasena: string;
   rol: string;
   activo: boolean;
   proyectos: string[];
@@ -72,7 +70,7 @@ type ConfiguracionGeneral = {
   seguridad: SeguridadConfig;
 };
 
-const STORAGE_KEY = 'construplata-configuracion-v2';
+const STORAGE_KEY = 'construplata-configuracion-v3';
 
 const modulosDisponibles = [
   'Dashboard',
@@ -83,9 +81,9 @@ const modulosDisponibles = [
   'Cobros y avances',
   'Facturación',
   'Gastos',
-  'Cajas y bancos',
+  'Caja y bancos',
   'Reportes',
-  'Configuraciones',
+  'Configuración',
 ];
 
 const accionesDisponibles = [
@@ -96,6 +94,8 @@ const accionesDisponibles = [
   'Aprobar',
   'Imprimir',
   'Exportar',
+  'Registrar pago',
+  'Registrar cobro',
   'Administrar usuarios',
 ];
 
@@ -111,19 +111,7 @@ const initialConfig: ConfiguracionGeneral = {
     prefijoCotizacion: 'COT',
     prefijoFactura: 'FAC',
   },
-  usuarios: [
-    {
-      id: 'usuario-admin',
-      nombre: 'Administrador',
-      correo: '',
-      contrasena: 'Admin1234!',
-      rol: 'Administrador',
-      activo: true,
-      proyectos: ['Todos'],
-      modulos: [...modulosDisponibles],
-      acciones: [...accionesDisponibles],
-    },
-  ],
+  usuarios: [],
   roles: [
     {
       id: 'rol-admin',
@@ -135,7 +123,7 @@ const initialConfig: ConfiguracionGeneral = {
     {
       id: 'rol-ingeniero',
       nombre: 'Ingeniero',
-      descripcion: 'Gestión operativa y seguimiento de proyectos.',
+      descripcion: 'Gestión técnica y seguimiento de proyectos.',
       modulos: [
         'Dashboard',
         'Clientes',
@@ -155,10 +143,25 @@ const initialConfig: ConfiguracionGeneral = {
         'Cobros y avances',
         'Facturación',
         'Gastos',
-        'Cajas y bancos',
+        'Caja y bancos',
         'Reportes',
       ],
-      acciones: ['Ver', 'Crear', 'Editar', 'Imprimir', 'Exportar'],
+      acciones: [
+        'Ver',
+        'Crear',
+        'Editar',
+        'Imprimir',
+        'Exportar',
+        'Registrar pago',
+        'Registrar cobro',
+      ],
+    },
+    {
+      id: 'rol-compras',
+      nombre: 'Compras',
+      descripcion: 'Gestión de materiales, suplidores y adquisiciones.',
+      modulos: ['Dashboard', 'Proyectos', 'Gastos', 'Reportes'],
+      acciones: ['Ver', 'Crear', 'Editar', 'Imprimir'],
     },
   ],
   categorias: [
@@ -182,36 +185,46 @@ const initialConfig: ConfiguracionGeneral = {
   },
 };
 
-const loadConfig = (): ConfiguracionGeneral => {
+function loadConfig(): ConfiguracionGeneral {
   if (typeof window === 'undefined') return initialConfig;
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-
     if (!raw) return initialConfig;
 
-    const saved = JSON.parse(raw) as ConfiguracionGeneral;
+    const saved = JSON.parse(raw) as Partial<ConfiguracionGeneral>;
 
     return {
       ...initialConfig,
       ...saved,
-      usuarios: (saved.usuarios || []).map((usuario) => ({
-        ...usuario,
-        contrasena: usuario.contrasena || '',
-      })),
+      empresa: {
+        ...initialConfig.empresa,
+        ...(saved.empresa || {}),
+      },
+      seguridad: {
+        ...initialConfig.seguridad,
+        ...(saved.seguridad || {}),
+      },
+      roles: saved.roles?.length ? saved.roles : initialConfig.roles,
+      categorias: saved.categorias?.length
+        ? saved.categorias
+        : initialConfig.categorias,
+      usuarios: saved.usuarios || [],
     };
   } catch {
     return initialConfig;
   }
-};
+}
 
-const saveConfig = (config: ConfiguracionGeneral) => {
-  if (typeof window === 'undefined') return;
+function saveConfig(config: ConfiguracionGeneral) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-};
+}
 
-const makeId = (prefix: string) =>
-  `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+function makeId(prefix: string) {
+  return `${prefix}-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
+}
 
 export default function Page() {
   return (
@@ -230,14 +243,14 @@ function Configuraciones() {
   const [showUser, setShowUser] = useState(false);
   const [showRole, setShowRole] = useState(false);
   const [showCategory, setShowCategory] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [creatingUser, setCreatingUser] = useState(false);
 
   const [userForm, setUserForm] = useState({
     nombre: '',
     correo: '',
     contrasena: '',
     confirmarContrasena: '',
-    rol: config.roles[0]?.nombre || 'Administrador',
+    rol: 'Administrador',
     activo: true,
     proyectos: 'Todos',
     modulos: [] as string[],
@@ -256,14 +269,35 @@ function Configuraciones() {
     tipo: 'gasto' as 'gasto' | 'general',
   });
 
-  const selectedUser = useMemo(
-    () => config.usuarios.find((user) => user.id === selectedUserId) || null,
-    [config.usuarios, selectedUserId]
-  );
-
   const persist = (next: ConfiguracionGeneral) => {
     setConfig(next);
     saveConfig(next);
+  };
+
+  useEffect(() => {
+    if (!config.roles.some((role) => role.nombre === userForm.rol)) {
+      setUserForm((current) => ({
+        ...current,
+        rol: config.roles[0]?.nombre || 'Administrador',
+      }));
+    }
+  }, [config.roles, userForm.rol]);
+
+  const selectedRole = useMemo(
+    () => config.roles.find((role) => role.nombre === userForm.rol),
+    [config.roles, userForm.rol]
+  );
+
+  const toggleArrayValue = (
+    value: string,
+    current: string[],
+    setter: (next: string[]) => void
+  ) => {
+    setter(
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value]
+    );
   };
 
   const saveEmpresa = () => {
@@ -271,7 +305,7 @@ function Configuraciones() {
     window.alert('Configuración de empresa guardada.');
   };
 
-  const saveUsuario = () => {
+  const saveUsuario = async () => {
     if (!userForm.nombre.trim() || !userForm.correo.trim()) {
       window.alert('Completa el nombre y el correo del usuario.');
       return;
@@ -287,55 +321,93 @@ function Configuraciones() {
       return;
     }
 
-    const correoExiste = config.usuarios.some(
-      (usuario) =>
-        usuario.correo.trim().toLowerCase() ===
-        userForm.correo.trim().toLowerCase()
-    );
+    const correo = userForm.correo.trim().toLowerCase();
 
-    if (correoExiste) {
+    if (
+      config.usuarios.some(
+        (usuario) => usuario.correo.toLowerCase() === correo
+      )
+    ) {
       window.alert('Ya existe un usuario con ese correo.');
       return;
     }
 
-    const role = config.roles.find((item) => item.nombre === userForm.rol);
+    const modulos = userForm.modulos.length
+      ? userForm.modulos
+      : selectedRole?.modulos || [];
 
-    const user: UsuarioConfig = {
-      id: makeId('usuario'),
-      nombre: userForm.nombre.trim(),
-      correo: userForm.correo.trim(),
-      contrasena: userForm.contrasena,
-      rol: userForm.rol,
-      activo: userForm.activo,
-      proyectos: userForm.proyectos
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean),
-      modulos: userForm.modulos.length
-        ? userForm.modulos
-        : role?.modulos || [],
-      acciones: userForm.acciones.length
-        ? userForm.acciones
-        : role?.acciones || [],
-    };
+    const acciones = userForm.acciones.length
+      ? userForm.acciones
+      : selectedRole?.acciones || [];
 
-    persist({
-      ...config,
-      usuarios: [...config.usuarios, user],
-    });
+    setCreatingUser(true);
 
-    setShowUser(false);
-    setUserForm({
-      nombre: '',
-      correo: '',
-      contrasena: '',
-      confirmarContrasena: '',
-      rol: config.roles[0]?.nombre || 'Administrador',
-      activo: true,
-      proyectos: 'Todos',
-      modulos: [],
-      acciones: [],
-    });
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nombre: userForm.nombre.trim(),
+          correo,
+          contrasena: userForm.contrasena,
+          rol: userForm.rol,
+          activo: userForm.activo,
+          modulos,
+          acciones,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        window.alert(result.error || 'No se pudo crear el usuario.');
+        return;
+      }
+
+      const user: UsuarioConfig = {
+        id: result.user.id,
+        nombre: result.user.nombre,
+        correo: result.user.correo,
+        rol: result.user.rol,
+        activo: result.user.activo,
+        proyectos: userForm.proyectos
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean),
+        modulos,
+        acciones,
+      };
+
+      persist({
+        ...config,
+        usuarios: [...config.usuarios, user],
+      });
+
+      setShowUser(false);
+      setUserForm({
+        nombre: '',
+        correo: '',
+        contrasena: '',
+        confirmarContrasena: '',
+        rol: config.roles[0]?.nombre || 'Administrador',
+        activo: true,
+        proyectos: 'Todos',
+        modulos: [],
+        acciones: [],
+      });
+
+      window.alert(
+        'Usuario creado correctamente. Ya puede iniciar sesión desde PC o teléfono.'
+      );
+    } catch {
+      window.alert(
+        'No se pudo conectar con el servidor para crear el usuario.'
+      );
+    } finally {
+      setCreatingUser(false);
+    }
   };
 
   const saveRol = () => {
@@ -344,17 +416,18 @@ function Configuraciones() {
       return;
     }
 
-    const role: RolConfig = {
-      id: makeId('rol'),
-      nombre: roleForm.nombre.trim(),
-      descripcion: roleForm.descripcion.trim(),
-      modulos: roleForm.modulos,
-      acciones: roleForm.acciones,
-    };
-
     persist({
       ...config,
-      roles: [...config.roles, role],
+      roles: [
+        ...config.roles,
+        {
+          id: makeId('rol'),
+          nombre: roleForm.nombre.trim(),
+          descripcion: roleForm.descripcion.trim(),
+          modulos: roleForm.modulos,
+          acciones: roleForm.acciones,
+        },
+      ],
     });
 
     setShowRole(false);
@@ -391,72 +464,6 @@ function Configuraciones() {
     });
   };
 
-  const deleteUsuario = (id: string) => {
-    if (!window.confirm('¿Eliminar este usuario de la configuración?')) return;
-
-    persist({
-      ...config,
-      usuarios: config.usuarios.filter((user) => user.id !== id),
-    });
-  };
-
-  const deleteRol = (id: string) => {
-    if (!window.confirm('¿Eliminar este rol?')) return;
-
-    persist({
-      ...config,
-      roles: config.roles.filter((role) => role.id !== id),
-    });
-  };
-
-  const deleteCategoria = (id: string) => {
-    if (!window.confirm('¿Eliminar esta categoría?')) return;
-
-    persist({
-      ...config,
-      categorias: config.categorias.filter((category) => category.id !== id),
-    });
-  };
-
-  const copyRolePermissions = (userId: string, roleName: string) => {
-    const role = config.roles.find((item) => item.nombre === roleName);
-    if (!role) return;
-
-    persist({
-      ...config,
-      usuarios: config.usuarios.map((user) =>
-        user.id === userId
-          ? {
-              ...user,
-              modulos: [...role.modulos],
-              acciones: [...role.acciones],
-            }
-          : user
-      ),
-    });
-  };
-
-  const toggleUserStatus = (userId: string) => {
-    persist({
-      ...config,
-      usuarios: config.usuarios.map((user) =>
-        user.id === userId ? { ...user, activo: !user.activo } : user
-      ),
-    });
-  };
-
-  const toggleArrayValue = (
-    value: string,
-    current: string[],
-    setter: (next: string[]) => void
-  ) => {
-    setter(
-      current.includes(value)
-        ? current.filter((item) => item !== value)
-        : [...current, value]
-    );
-  };
-
   return (
     <>
       <div className="settings-top">
@@ -465,7 +472,7 @@ function Configuraciones() {
           <div>
             <b>Centro de configuración del sistema</b>
             <span>
-              Administra la empresa, usuarios, roles, categorías y seguridad.
+              Empresa, usuarios, roles, categorías y seguridad.
             </span>
           </div>
         </div>
@@ -520,6 +527,11 @@ function Configuraciones() {
               <span className="eyebrow">Empresa</span>
               <h3>Datos generales y facturación</h3>
             </div>
+
+            <button className="primary" onClick={saveEmpresa}>
+              <Save size={17} />
+              Guardar
+            </button>
           </div>
 
           <div className="settings-grid">
@@ -574,7 +586,6 @@ function Configuraciones() {
             <label>
               Correo
               <input
-                type="email"
                 value={config.empresa.email}
                 onChange={(event) =>
                   setConfig({
@@ -588,7 +599,7 @@ function Configuraciones() {
               />
             </label>
 
-            <label className="wide">
+            <label className="full">
               Dirección
               <input
                 value={config.empresa.direccion}
@@ -618,17 +629,15 @@ function Configuraciones() {
                   })
                 }
               >
-                <option value="DOP">DOP · Peso dominicano</option>
-                <option value="USD">USD · Dólar estadounidense</option>
+                <option value="DOP">DOP</option>
+                <option value="USD">USD</option>
               </select>
             </label>
 
             <label>
-              ITBIS (%)
+              ITBIS %
               <input
                 type="number"
-                min="0"
-                max="100"
                 value={config.empresa.itbis}
                 onChange={(event) =>
                   setConfig({
@@ -641,45 +650,6 @@ function Configuraciones() {
                 }
               />
             </label>
-
-            <label>
-              Prefijo cotizaciones
-              <input
-                value={config.empresa.prefijoCotizacion}
-                onChange={(event) =>
-                  setConfig({
-                    ...config,
-                    empresa: {
-                      ...config.empresa,
-                      prefijoCotizacion: event.target.value.toUpperCase(),
-                    },
-                  })
-                }
-              />
-            </label>
-
-            <label>
-              Prefijo facturas
-              <input
-                value={config.empresa.prefijoFactura}
-                onChange={(event) =>
-                  setConfig({
-                    ...config,
-                    empresa: {
-                      ...config.empresa,
-                      prefijoFactura: event.target.value.toUpperCase(),
-                    },
-                  })
-                }
-              />
-            </label>
-          </div>
-
-          <div className="panel-actions">
-            <button type="button" className="primary" onClick={saveEmpresa}>
-              <Save size={17} />
-              Guardar configuración
-            </button>
           </div>
         </section>
       )}
@@ -689,85 +659,78 @@ function Configuraciones() {
           <div className="panel-head">
             <div>
               <span className="eyebrow">Usuarios</span>
-              <h3>Accesos, permisos y proyectos asignados</h3>
+              <h3>Usuarios reales de Supabase</h3>
             </div>
 
-            <button
-              type="button"
-              className="primary"
-              onClick={() => setShowUser(true)}
-            >
+            <button className="primary" onClick={() => setShowUser(true)}>
               <Plus size={17} />
               Nuevo usuario
             </button>
           </div>
 
-          <div className="user-grid">
-            {config.usuarios.map((user) => (
-              <article className="user-card" key={user.id}>
-                <div className="user-head">
-                  <div>
-                    <span className={user.activo ? 'status active' : 'status'}>
-                      {user.activo ? 'Activo' : 'Inactivo'}
-                    </span>
-                    <h3>{user.nombre}</h3>
-                    <p>{user.correo || 'Sin correo'}</p>
-                  </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Correo</th>
+                  <th>Rol</th>
+                  <th>Estado</th>
+                  <th />
+                </tr>
+              </thead>
 
-                  <button
-                    type="button"
-                    className="icon danger"
-                    onClick={() => deleteUsuario(user.id)}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-
-                <div className="user-meta">
-                  <div>
-                    <span>Rol</span>
-                    <b>{user.rol}</b>
-                  </div>
-
-                  <div>
-                    <span>Proyectos</span>
-                    <b>{user.proyectos.join(', ') || 'Sin asignación'}</b>
-                  </div>
-
-                  <div>
-                    <span>Contraseña</span>
-                    <b>{user.contrasena ? 'Configurada' : 'No configurada'}</b>
-                  </div>
-                </div>
-
-                <div className="user-actions">
-                  <button
-                    type="button"
-                    className="ghost-client-btn"
-                    onClick={() => copyRolePermissions(user.id, user.rol)}
-                  >
-                    Copiar permisos del rol
-                  </button>
-
-                  <button
-                    type="button"
-                    className="ghost-client-btn"
-                    onClick={() => toggleUserStatus(user.id)}
-                  >
-                    {user.activo ? 'Desactivar' : 'Activar'}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="ghost-client-btn"
-                    onClick={() => setSelectedUserId(user.id)}
-                  >
-                    Ver permisos
-                  </button>
-                </div>
-              </article>
-            ))}
+              <tbody>
+                {config.usuarios.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="empty">
+                      Todavía no has creado usuarios desde esta pantalla.
+                    </td>
+                  </tr>
+                ) : (
+                  config.usuarios.map((user) => (
+                    <tr key={user.id}>
+                      <td>{user.nombre}</td>
+                      <td>{user.correo}</td>
+                      <td>{user.rol}</td>
+                      <td>
+                        <span
+                          className={
+                            user.activo
+                              ? 'status active'
+                              : 'status'
+                          }
+                        >
+                          {user.activo ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          className="danger-icon"
+                          onClick={() =>
+                            persist({
+                              ...config,
+                              usuarios: config.usuarios.filter(
+                                (item) => item.id !== user.id
+                              ),
+                            })
+                          }
+                          title="Quitar de la lista local"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
+
+          <p className="note">
+            Al crear un usuario aquí, también se crea en Supabase
+            Authentication y puede iniciar sesión desde cualquier dispositivo.
+          </p>
         </section>
       )}
 
@@ -776,40 +739,24 @@ function Configuraciones() {
           <div className="panel-head">
             <div>
               <span className="eyebrow">Roles</span>
-              <h3>Perfiles de acceso reutilizables</h3>
+              <h3>Perfiles y permisos predeterminados</h3>
             </div>
 
-            <button
-              type="button"
-              className="primary"
-              onClick={() => setShowRole(true)}
-            >
+            <button className="primary" onClick={() => setShowRole(true)}>
               <Plus size={17} />
               Nuevo rol
             </button>
           </div>
 
-          <div className="role-grid">
+          <div className="cards-grid">
             {config.roles.map((role) => (
               <article className="role-card" key={role.id}>
-                <div className="role-head">
-                  <div>
-                    <KeyRound size={20} />
-                    <h3>{role.nombre}</h3>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="icon danger"
-                    onClick={() => deleteRol(role.id)}
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                <div>
+                  <b>{role.nombre}</b>
+                  <p>{role.descripcion}</p>
                 </div>
 
-                <p>{role.descripcion || 'Sin descripción.'}</p>
-
-                <div className="role-summary">
+                <div className="chips">
                   <span>{role.modulos.length} módulos</span>
                   <span>{role.acciones.length} acciones</span>
                 </div>
@@ -824,11 +771,10 @@ function Configuraciones() {
           <div className="panel-head">
             <div>
               <span className="eyebrow">Categorías</span>
-              <h3>Clasificación para gastos y reportes</h3>
+              <h3>Clasificación de gastos y registros</h3>
             </div>
 
             <button
-              type="button"
               className="primary"
               onClick={() => setShowCategory(true)}
             >
@@ -837,21 +783,17 @@ function Configuraciones() {
             </button>
           </div>
 
-          <div className="category-grid">
+          <div className="cards-grid">
             {config.categorias.map((category) => (
-              <article className="category-card" key={category.id}>
+              <article className="role-card" key={category.id}>
                 <div>
-                  <span>{category.tipo === 'gasto' ? 'Gasto' : 'General'}</span>
-                  <h3>{category.nombre}</h3>
+                  <b>{category.nombre}</b>
+                  <p>
+                    {category.tipo === 'gasto'
+                      ? 'Categoría de gasto'
+                      : 'Categoría general'}
+                  </p>
                 </div>
-
-                <button
-                  type="button"
-                  className="icon danger"
-                  onClick={() => deleteCategoria(category.id)}
-                >
-                  <Trash2 size={16} />
-                </button>
               </article>
             ))}
           </div>
@@ -863,16 +805,26 @@ function Configuraciones() {
           <div className="panel-head">
             <div>
               <span className="eyebrow">Seguridad</span>
-              <h3>Sesiones, contraseñas y auditoría</h3>
+              <h3>Políticas del sistema</h3>
             </div>
+
+            <button
+              className="primary"
+              onClick={() => {
+                persist(config);
+                window.alert('Configuración de seguridad guardada.');
+              }}
+            >
+              <Save size={17} />
+              Guardar
+            </button>
           </div>
 
-          <div className="security-grid">
+          <div className="settings-grid">
             <label>
-              Duración de sesión (minutos)
+              Minutos de sesión
               <input
                 type="number"
-                min="15"
                 value={config.seguridad.sesionMinutos}
                 onChange={(event) =>
                   setConfig({
@@ -890,8 +842,6 @@ function Configuraciones() {
               Intentos permitidos
               <input
                 type="number"
-                min="1"
-                max="20"
                 value={config.seguridad.intentosPermitidos}
                 onChange={(event) =>
                   setConfig({
@@ -904,315 +854,409 @@ function Configuraciones() {
                 }
               />
             </label>
-
-            <Toggle
-              label="Exigir contraseña fuerte"
-              checked={config.seguridad.exigirContrasenaFuerte}
-              onChange={(checked) =>
-                setConfig({
-                  ...config,
-                  seguridad: {
-                    ...config.seguridad,
-                    exigirContrasenaFuerte: checked,
-                  },
-                })
-              }
-            />
-
-            <Toggle
-              label="Bloquear después de varios intentos"
-              checked={config.seguridad.bloquearTrasIntentos}
-              onChange={(checked) =>
-                setConfig({
-                  ...config,
-                  seguridad: {
-                    ...config.seguridad,
-                    bloquearTrasIntentos: checked,
-                  },
-                })
-              }
-            />
-
-            <Toggle
-              label="Auditoría de acciones activa"
-              checked={config.seguridad.auditoriaActiva}
-              onChange={(checked) =>
-                setConfig({
-                  ...config,
-                  seguridad: {
-                    ...config.seguridad,
-                    auditoriaActiva: checked,
-                  },
-                })
-              }
-            />
           </div>
 
-          <div className="panel-actions">
-            <button
-              type="button"
-              className="primary"
-              onClick={() => {
-                persist(config);
-                window.alert('Configuración de seguridad guardada.');
-              }}
-            >
-              <Save size={17} />
-              Guardar seguridad
-            </button>
+          <div className="switch-list">
+            {[
+              {
+                key: 'exigirContrasenaFuerte' as const,
+                label: 'Exigir contraseña fuerte',
+              },
+              {
+                key: 'bloquearTrasIntentos' as const,
+                label: 'Bloquear después de varios intentos',
+              },
+              {
+                key: 'auditoriaActiva' as const,
+                label: 'Auditoría activa',
+              },
+            ].map((item) => (
+              <button
+                key={item.key}
+                className={
+                  config.seguridad[item.key]
+                    ? 'switch-row active'
+                    : 'switch-row'
+                }
+                onClick={() =>
+                  setConfig({
+                    ...config,
+                    seguridad: {
+                      ...config.seguridad,
+                      [item.key]: !config.seguridad[item.key],
+                    },
+                  })
+                }
+              >
+                <span>{item.label}</span>
+                <Check size={17} />
+              </button>
+            ))}
           </div>
         </section>
       )}
 
       {showUser && (
-        <Modal title="Nuevo usuario" onClose={() => setShowUser(false)}>
-          <div className="settings-grid">
-            <label>
-              Nombre
-              <input
-                value={userForm.nombre}
-                onChange={(event) =>
-                  setUserForm({ ...userForm, nombre: event.target.value })
-                }
-              />
-            </label>
+        <div className="cp-modal-overlay">
+          <div className="cp-modal">
+            <div className="modal-head">
+              <div>
+                <span className="eyebrow">Usuario</span>
+                <h3>Crear usuario real</h3>
+              </div>
 
-            <label>
-              Correo
-              <input
-                type="email"
-                value={userForm.correo}
-                onChange={(event) =>
-                  setUserForm({ ...userForm, correo: event.target.value })
-                }
-              />
-            </label>
+              <button onClick={() => setShowUser(false)}>
+                <X size={19} />
+              </button>
+            </div>
 
-            <label>
-              Contraseña
-              <input
-                type="password"
-                value={userForm.contrasena}
-                onChange={(event) =>
-                  setUserForm({
-                    ...userForm,
-                    contrasena: event.target.value,
-                  })
-                }
-                placeholder="Mínimo 6 caracteres"
-                autoComplete="new-password"
-              />
-            </label>
+            <div className="settings-grid">
+              <label>
+                Nombre
+                <input
+                  value={userForm.nombre}
+                  onChange={(event) =>
+                    setUserForm({
+                      ...userForm,
+                      nombre: event.target.value,
+                    })
+                  }
+                />
+              </label>
 
-            <label>
-              Confirmar contraseña
-              <input
-                type="password"
-                value={userForm.confirmarContrasena}
-                onChange={(event) =>
-                  setUserForm({
-                    ...userForm,
-                    confirmarContrasena: event.target.value,
-                  })
-                }
-                placeholder="Repite la contraseña"
-                autoComplete="new-password"
-              />
-            </label>
+              <label>
+                Correo
+                <input
+                  type="email"
+                  value={userForm.correo}
+                  onChange={(event) =>
+                    setUserForm({
+                      ...userForm,
+                      correo: event.target.value,
+                    })
+                  }
+                />
+              </label>
 
-            <label>
-              Rol
-              <select
-                value={userForm.rol}
-                onChange={(event) =>
-                  setUserForm({ ...userForm, rol: event.target.value })
-                }
+              <label>
+                Contraseña
+                <input
+                  type="password"
+                  value={userForm.contrasena}
+                  onChange={(event) =>
+                    setUserForm({
+                      ...userForm,
+                      contrasena: event.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Confirmar contraseña
+                <input
+                  type="password"
+                  value={userForm.confirmarContrasena}
+                  onChange={(event) =>
+                    setUserForm({
+                      ...userForm,
+                      confirmarContrasena: event.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Rol
+                <select
+                  value={userForm.rol}
+                  onChange={(event) =>
+                    setUserForm({
+                      ...userForm,
+                      rol: event.target.value,
+                      modulos: [],
+                      acciones: [],
+                    })
+                  }
+                >
+                  {config.roles.map((role) => (
+                    <option key={role.id} value={role.nombre}>
+                      {role.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Proyectos
+                <input
+                  value={userForm.proyectos}
+                  onChange={(event) =>
+                    setUserForm({
+                      ...userForm,
+                      proyectos: event.target.value,
+                    })
+                  }
+                  placeholder="Todos o separados por coma"
+                />
+              </label>
+            </div>
+
+            <div className="permissions-box">
+              <b>Módulos permitidos</b>
+              <div className="check-grid">
+                {modulosDisponibles.map((module) => {
+                  const selected =
+                    userForm.modulos.length === 0
+                      ? selectedRole?.modulos.includes(module)
+                      : userForm.modulos.includes(module);
+
+                  return (
+                    <button
+                      key={module}
+                      className={selected ? 'check active' : 'check'}
+                      onClick={() => {
+                        const base =
+                          userForm.modulos.length === 0
+                            ? selectedRole?.modulos || []
+                            : userForm.modulos;
+
+                        toggleArrayValue(module, base, (next) =>
+                          setUserForm({
+                            ...userForm,
+                            modulos: next,
+                          })
+                        );
+                      }}
+                    >
+                      <Check size={15} />
+                      {module}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="permissions-box">
+              <b>Acciones permitidas</b>
+              <div className="check-grid">
+                {accionesDisponibles.map((action) => {
+                  const selected =
+                    userForm.acciones.length === 0
+                      ? selectedRole?.acciones.includes(action)
+                      : userForm.acciones.includes(action);
+
+                  return (
+                    <button
+                      key={action}
+                      className={selected ? 'check active' : 'check'}
+                      onClick={() => {
+                        const base =
+                          userForm.acciones.length === 0
+                            ? selectedRole?.acciones || []
+                            : userForm.acciones;
+
+                        toggleArrayValue(action, base, (next) =>
+                          setUserForm({
+                            ...userForm,
+                            acciones: next,
+                          })
+                        );
+                      }}
+                    >
+                      <Check size={15} />
+                      {action}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                className="ghost-client-btn"
+                onClick={() => setShowUser(false)}
               >
-                {config.roles.map((role) => (
-                  <option key={role.id}>{role.nombre}</option>
-                ))}
-              </select>
-            </label>
+                Cancelar
+              </button>
 
-            <label>
-              Proyectos asignados
-              <input
-                value={userForm.proyectos}
-                onChange={(event) =>
-                  setUserForm({ ...userForm, proyectos: event.target.value })
-                }
-                placeholder="Todos o nombres separados por coma"
-              />
-            </label>
+              <button
+                className="primary"
+                onClick={saveUsuario}
+                disabled={creatingUser}
+              >
+                <KeyRound size={17} />
+                {creatingUser ? 'Creando...' : 'Crear usuario'}
+              </button>
+            </div>
           </div>
-
-          <Checklist
-            title="Acceso a módulos"
-            values={modulosDisponibles}
-            selected={userForm.modulos}
-            onToggle={(value) =>
-              toggleArrayValue(value, userForm.modulos, (next) =>
-                setUserForm({ ...userForm, modulos: next })
-              )
-            }
-          />
-
-          <Checklist
-            title="Permisos por acción"
-            values={accionesDisponibles}
-            selected={userForm.acciones}
-            onToggle={(value) =>
-              toggleArrayValue(value, userForm.acciones, (next) =>
-                setUserForm({ ...userForm, acciones: next })
-              )
-            }
-          />
-
-          <div className="panel-actions">
-            <button className="primary" onClick={saveUsuario}>
-              <Save size={17} />
-              Guardar usuario
-            </button>
-          </div>
-        </Modal>
+        </div>
       )}
 
       {showRole && (
-        <Modal title="Nuevo rol" onClose={() => setShowRole(false)}>
-          <div className="settings-grid">
-            <label>
-              Nombre del rol
-              <input
-                value={roleForm.nombre}
-                onChange={(event) =>
-                  setRoleForm({ ...roleForm, nombre: event.target.value })
-                }
-              />
-            </label>
+        <div className="cp-modal-overlay">
+          <div className="cp-modal">
+            <div className="modal-head">
+              <div>
+                <span className="eyebrow">Rol</span>
+                <h3>Nuevo rol</h3>
+              </div>
 
-            <label className="wide">
-              Descripción
-              <input
-                value={roleForm.descripcion}
-                onChange={(event) =>
-                  setRoleForm({
-                    ...roleForm,
-                    descripcion: event.target.value,
-                  })
-                }
-              />
-            </label>
+              <button onClick={() => setShowRole(false)}>
+                <X size={19} />
+              </button>
+            </div>
+
+            <div className="settings-grid">
+              <label>
+                Nombre
+                <input
+                  value={roleForm.nombre}
+                  onChange={(event) =>
+                    setRoleForm({
+                      ...roleForm,
+                      nombre: event.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label className="full">
+                Descripción
+                <input
+                  value={roleForm.descripcion}
+                  onChange={(event) =>
+                    setRoleForm({
+                      ...roleForm,
+                      descripcion: event.target.value,
+                    })
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="permissions-box">
+              <b>Módulos</b>
+              <div className="check-grid">
+                {modulosDisponibles.map((module) => (
+                  <button
+                    key={module}
+                    className={
+                      roleForm.modulos.includes(module)
+                        ? 'check active'
+                        : 'check'
+                    }
+                    onClick={() =>
+                      toggleArrayValue(
+                        module,
+                        roleForm.modulos,
+                        (next) =>
+                          setRoleForm({
+                            ...roleForm,
+                            modulos: next,
+                          })
+                      )
+                    }
+                  >
+                    <Check size={15} />
+                    {module}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                className="ghost-client-btn"
+                onClick={() => setShowRole(false)}
+              >
+                Cancelar
+              </button>
+
+              <button className="primary" onClick={saveRol}>
+                <Save size={17} />
+                Guardar rol
+              </button>
+            </div>
           </div>
-
-          <Checklist
-            title="Módulos del rol"
-            values={modulosDisponibles}
-            selected={roleForm.modulos}
-            onToggle={(value) =>
-              toggleArrayValue(value, roleForm.modulos, (next) =>
-                setRoleForm({ ...roleForm, modulos: next })
-              )
-            }
-          />
-
-          <Checklist
-            title="Acciones permitidas"
-            values={accionesDisponibles}
-            selected={roleForm.acciones}
-            onToggle={(value) =>
-              toggleArrayValue(value, roleForm.acciones, (next) =>
-                setRoleForm({ ...roleForm, acciones: next })
-              )
-            }
-          />
-
-          <div className="panel-actions">
-            <button className="primary" onClick={saveRol}>
-              <Save size={17} />
-              Guardar rol
-            </button>
-          </div>
-        </Modal>
+        </div>
       )}
 
       {showCategory && (
-        <Modal title="Nueva categoría" onClose={() => setShowCategory(false)}>
-          <div className="settings-grid">
-            <label>
-              Nombre
-              <input
-                value={categoryForm.nombre}
-                onChange={(event) =>
-                  setCategoryForm({
-                    ...categoryForm,
-                    nombre: event.target.value,
-                  })
-                }
-              />
-            </label>
+        <div className="cp-modal-overlay">
+          <div className="cp-modal small">
+            <div className="modal-head">
+              <div>
+                <span className="eyebrow">Categoría</span>
+                <h3>Nueva categoría</h3>
+              </div>
 
-            <label>
-              Tipo
-              <select
-                value={categoryForm.tipo}
-                onChange={(event) =>
-                  setCategoryForm({
-                    ...categoryForm,
-                    tipo: event.target.value as 'gasto' | 'general',
-                  })
-                }
+              <button onClick={() => setShowCategory(false)}>
+                <X size={19} />
+              </button>
+            </div>
+
+            <div className="settings-grid">
+              <label>
+                Nombre
+                <input
+                  value={categoryForm.nombre}
+                  onChange={(event) =>
+                    setCategoryForm({
+                      ...categoryForm,
+                      nombre: event.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Tipo
+                <select
+                  value={categoryForm.tipo}
+                  onChange={(event) =>
+                    setCategoryForm({
+                      ...categoryForm,
+                      tipo: event.target.value as 'gasto' | 'general',
+                    })
+                  }
+                >
+                  <option value="gasto">Gasto</option>
+                  <option value="general">General</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                className="ghost-client-btn"
+                onClick={() => setShowCategory(false)}
               >
-                <option value="gasto">Gasto</option>
-                <option value="general">General</option>
-              </select>
-            </label>
+                Cancelar
+              </button>
+
+              <button className="primary" onClick={saveCategoria}>
+                <Save size={17} />
+                Guardar
+              </button>
+            </div>
           </div>
-
-          <div className="panel-actions">
-            <button className="primary" onClick={saveCategoria}>
-              <Save size={17} />
-              Guardar categoría
-            </button>
-          </div>
-        </Modal>
-      )}
-
-      {selectedUser && (
-        <Modal
-          title={`Permisos de ${selectedUser.nombre}`}
-          onClose={() => setSelectedUserId(null)}
-        >
-          <Checklist
-            title="Módulos asignados"
-            values={modulosDisponibles}
-            selected={selectedUser.modulos}
-            readOnly
-          />
-
-          <Checklist
-            title="Acciones permitidas"
-            values={accionesDisponibles}
-            selected={selectedUser.acciones}
-            readOnly
-          />
-        </Modal>
+        </div>
       )}
 
       <style jsx>{`
         .settings-top {
-          margin-bottom: 18px;
+          margin-bottom: 16px;
         }
 
         .settings-banner {
-          min-height: 62px;
-          padding: 14px 16px;
           display: flex;
           align-items: center;
           gap: 12px;
-          border: 1px solid var(--line);
-          border-radius: 17px;
-          color: var(--blue);
-          background: rgba(23, 105, 224, 0.07);
+          padding: 18px;
+          border-radius: 18px;
+          color: white;
+          background: linear-gradient(135deg, #0d4d91, #1378d4);
         }
 
         .settings-banner b,
@@ -1222,414 +1266,356 @@ function Configuraciones() {
 
         .settings-banner span {
           margin-top: 4px;
-          color: var(--muted);
-          font-size: 12px;
+          opacity: 0.78;
+          font-size: 13px;
         }
 
         .settings-tabs {
           display: flex;
           gap: 8px;
-          flex-wrap: wrap;
-          margin-bottom: 18px;
+          margin-bottom: 16px;
+          overflow-x: auto;
         }
 
         .settings-tabs button {
           min-height: 42px;
-          padding: 0 14px;
-          display: inline-flex;
+          display: flex;
           align-items: center;
-          gap: 8px;
-          border: 1px solid var(--line);
+          gap: 7px;
+          padding: 0 14px;
+          border: 1px solid #d9e3eb;
           border-radius: 12px;
-          color: var(--muted);
-          background: var(--card);
+          background: white;
+          color: #53697d;
           font-weight: 800;
+          cursor: pointer;
+          white-space: nowrap;
         }
 
         .settings-tabs button.active {
-          color: #fff;
-          border-color: transparent;
-          background: linear-gradient(135deg, #1769e0, #168edc);
+          color: white;
+          border-color: #1768be;
+          background: #1768be;
         }
 
         .settings-panel {
           padding: 22px;
-          border: 1px solid var(--line);
-          border-radius: 22px;
-          background: var(--card);
-          box-shadow: var(--soft-shadow);
+          border: 1px solid #dce5ec;
+          border-radius: 20px;
+          background: white;
         }
 
-        .panel-head {
+        .panel-head,
+        .modal-head,
+        .modal-actions {
           display: flex;
-          justify-content: space-between;
           align-items: center;
+          justify-content: space-between;
           gap: 16px;
-          margin-bottom: 20px;
         }
 
-        .panel-head h3 {
-          margin: 6px 0 0;
+        .eyebrow {
+          color: #1768be;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
         }
 
-        .settings-grid,
-        .security-grid {
+        h3 {
+          margin: 5px 0 0;
+          color: #153853;
+        }
+
+        .primary,
+        .ghost-client-btn,
+        .danger-icon,
+        .modal-head > button {
+          border: 0;
+          cursor: pointer;
+        }
+
+        .primary {
+          min-height: 42px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 0 15px;
+          border-radius: 12px;
+          color: white;
+          background: #1768be;
+          font-weight: 900;
+        }
+
+        .primary:disabled {
+          opacity: 0.6;
+          cursor: wait;
+        }
+
+        .settings-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 14px;
+          gap: 16px;
+          margin-top: 20px;
         }
 
-        .settings-grid label,
-        .security-grid label {
+        label {
           display: grid;
           gap: 7px;
-          color: var(--muted);
-          font-size: 11px;
+          color: #38546b;
+          font-size: 13px;
           font-weight: 800;
         }
 
-        .settings-grid input,
-        .settings-grid select,
-        .security-grid input {
-          min-height: 44px;
-          padding: 0 12px;
-          border: 1px solid var(--line);
-          border-radius: 12px;
-          color: var(--text);
-          background: var(--card);
-        }
-
-        .wide {
+        label.full {
           grid-column: 1 / -1;
         }
 
-        .panel-actions {
+        input,
+        select {
+          width: 100%;
+          min-height: 44px;
+          box-sizing: border-box;
+          padding: 0 12px;
+          border: 1px solid #cfdae3;
+          border-radius: 11px;
+          background: white;
+          font-size: 14px;
+        }
+
+        .table-wrap {
           margin-top: 18px;
-          display: flex;
-          justify-content: flex-end;
+          overflow-x: auto;
         }
 
-        .user-grid,
-        .role-grid,
-        .category-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 14px;
+        table {
+          width: 100%;
+          border-collapse: collapse;
         }
 
-        .user-card,
-        .role-card,
-        .category-card {
-          padding: 18px;
-          border: 1px solid var(--line);
-          border-radius: 18px;
-          background: rgba(23, 105, 224, 0.025);
+        th,
+        td {
+          padding: 13px 12px;
+          border-bottom: 1px solid #e4ebf0;
+          text-align: left;
+          font-size: 13px;
         }
 
-        .user-head,
-        .role-head,
-        .category-card {
-          display: flex;
-          justify-content: space-between;
-          gap: 12px;
+        th {
+          color: #708296;
+          font-size: 11px;
+          text-transform: uppercase;
         }
 
-        .user-card h3,
-        .role-card h3,
-        .category-card h3 {
-          margin: 8px 0 4px;
-        }
-
-        .user-card p,
-        .role-card p {
-          margin: 0;
-          color: var(--muted);
-          font-size: 12px;
+        .empty {
+          padding: 28px;
+          color: #8090a0;
+          text-align: center;
         }
 
         .status {
           display: inline-flex;
           padding: 6px 9px;
           border-radius: 999px;
-          color: #a24b4b;
-          background: rgba(162, 75, 75, 0.1);
-          font-size: 10px;
+          color: #8a4d4d;
+          background: #fff0f0;
+          font-size: 11px;
           font-weight: 900;
         }
 
         .status.active {
-          color: #19885b;
-          background: rgba(25, 136, 91, 0.12);
+          color: #0b735b;
+          background: #e9f8f2;
         }
 
-        .user-meta {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 9px;
-          margin-top: 14px;
+        .danger-icon {
+          padding: 8px;
+          border-radius: 9px;
+          color: #a13333;
+          background: #fff0f0;
         }
 
-        .user-meta > div {
-          padding: 11px;
-          border: 1px solid var(--line);
-          border-radius: 12px;
-        }
-
-        .user-meta span,
-        .user-meta b {
-          display: block;
-        }
-
-        .user-meta span {
-          color: var(--muted);
-          font-size: 9px;
-        }
-
-        .user-meta b {
-          margin-top: 5px;
+        .note {
+          margin: 16px 0 0;
+          color: #718397;
           font-size: 12px;
+          line-height: 1.5;
         }
 
-        .user-actions {
+        .cards-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+          gap: 14px;
+          margin-top: 18px;
+        }
+
+        .role-card {
+          padding: 17px;
+          border: 1px solid #dfe7ed;
+          border-radius: 16px;
+          background: #fbfcfd;
+        }
+
+        .role-card p {
+          margin: 7px 0 0;
+          color: #738397;
+          font-size: 13px;
+          line-height: 1.45;
+        }
+
+        .chips {
           display: flex;
           gap: 7px;
-          flex-wrap: wrap;
           margin-top: 14px;
         }
 
-        .role-head > div {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: var(--blue);
-        }
-
-        .role-summary {
-          display: flex;
-          gap: 8px;
-          margin-top: 14px;
-        }
-
-        .role-summary span,
-        .category-card span {
-          padding: 6px 9px;
+        .chips span {
+          padding: 6px 8px;
           border-radius: 999px;
-          color: var(--blue);
-          background: rgba(23, 105, 224, 0.1);
-          font-size: 10px;
-          font-weight: 900;
+          color: #245f95;
+          background: #edf5fc;
+          font-size: 11px;
+          font-weight: 800;
         }
 
-        .category-card {
+        .switch-list {
+          display: grid;
+          gap: 10px;
+          margin-top: 20px;
+        }
+
+        .switch-row {
+          display: flex;
           align-items: center;
+          justify-content: space-between;
+          padding: 14px;
+          border: 1px solid #dfe7ed;
+          border-radius: 13px;
+          background: white;
+          color: #5c7185;
+          cursor: pointer;
         }
 
-        .danger {
-          color: #c25151;
+        .switch-row.active {
+          color: #1768be;
+          border-color: #bdd6ec;
+          background: #f2f8fd;
         }
 
-        @media (max-width: 800px) {
-          .settings-grid,
-          .security-grid,
-          .user-grid,
-          .role-grid,
-          .category-grid {
-            grid-template-columns: 1fr;
-          }
+        .cp-modal-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+          display: grid;
+          place-items: center;
+          padding: 18px;
+          background: rgba(6, 24, 42, 0.62);
+        }
 
-          .wide {
-            grid-column: auto;
+        .cp-modal {
+          width: min(100%, 860px);
+          max-height: 92vh;
+          overflow-y: auto;
+          box-sizing: border-box;
+          padding: 22px;
+          border-radius: 20px;
+          background: white;
+          box-shadow: 0 28px 80px rgba(0, 0, 0, 0.25);
+        }
+
+        .cp-modal.small {
+          max-width: 560px;
+        }
+
+        .modal-head > button {
+          display: grid;
+          place-items: center;
+          padding: 8px;
+          border-radius: 10px;
+          color: #53697d;
+          background: #eef3f7;
+        }
+
+        .permissions-box {
+          margin-top: 20px;
+        }
+
+        .check-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 10px;
+        }
+
+        .check {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 9px 11px;
+          border: 1px solid #d7e1e9;
+          border-radius: 10px;
+          color: #5b7084;
+          background: white;
+          cursor: pointer;
+        }
+
+        .check.active {
+          color: #1768be;
+          border-color: #99c2e8;
+          background: #edf6ff;
+        }
+
+        .modal-actions {
+          margin-top: 24px;
+        }
+
+        .ghost-client-btn {
+          min-height: 42px;
+          padding: 0 14px;
+          border: 1px solid #d5e0e8;
+          border-radius: 11px;
+          color: #5d7286;
+          background: white;
+          font-weight: 800;
+        }
+
+        @media (max-width: 760px) {
+          .settings-panel {
+            padding: 16px;
           }
 
           .panel-head {
-            align-items: stretch;
+            align-items: flex-start;
             flex-direction: column;
+          }
+
+          .settings-grid {
+            grid-template-columns: 1fr;
+          }
+
+          label.full {
+            grid-column: auto;
+          }
+
+          .primary {
+            width: 100%;
+          }
+
+          .cp-modal {
+            padding: 17px;
+          }
+
+          .modal-actions {
+            align-items: stretch;
+            flex-direction: column-reverse;
+          }
+
+          .modal-actions button {
+            width: 100%;
           }
         }
       `}</style>
     </>
-  );
-}
-
-function Toggle({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      className={`toggle-row ${checked ? 'checked' : ''}`}
-      onClick={() => onChange(!checked)}
-    >
-      <span>{label}</span>
-      <i>{checked ? <Check size={15} /> : null}</i>
-
-      <style jsx>{`
-        .toggle-row {
-          min-height: 52px;
-          padding: 12px 14px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 12px;
-          border: 1px solid var(--line);
-          border-radius: 14px;
-          color: var(--text);
-          background: var(--card);
-          font-weight: 800;
-        }
-
-        .toggle-row i {
-          width: 28px;
-          height: 28px;
-          display: grid;
-          place-items: center;
-          border-radius: 9px;
-          color: #fff;
-          background: var(--line);
-        }
-
-        .toggle-row.checked i {
-          background: #1769e0;
-        }
-      `}</style>
-    </button>
-  );
-}
-
-function Checklist({
-  title,
-  values,
-  selected,
-  onToggle,
-  readOnly = false,
-}: {
-  title: string;
-  values: string[];
-  selected: string[];
-  onToggle?: (value: string) => void;
-  readOnly?: boolean;
-}) {
-  return (
-    <section className="checklist">
-      <h3>{title}</h3>
-
-      <div>
-        {values.map((value) => {
-          const checked = selected.includes(value);
-
-          return (
-            <button
-              type="button"
-              key={value}
-              className={checked ? 'checked' : ''}
-              onClick={() => !readOnly && onToggle?.(value)}
-            >
-              <i>{checked ? <Check size={14} /> : null}</i>
-              {value}
-            </button>
-          );
-        })}
-      </div>
-
-      <style jsx>{`
-        .checklist {
-          margin-top: 18px;
-        }
-
-        .checklist h3 {
-          margin: 0 0 10px;
-          font-size: 14px;
-        }
-
-        .checklist > div {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-
-        .checklist button {
-          min-height: 38px;
-          padding: 0 11px;
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          border: 1px solid var(--line);
-          border-radius: 11px;
-          color: var(--muted);
-          background: var(--card);
-        }
-
-        .checklist button i {
-          width: 20px;
-          height: 20px;
-          display: grid;
-          place-items: center;
-          border-radius: 6px;
-          background: rgba(23, 105, 224, 0.08);
-        }
-
-        .checklist button.checked {
-          color: var(--blue);
-          border-color: rgba(23, 105, 224, 0.35);
-          background: rgba(23, 105, 224, 0.08);
-        }
-      `}</style>
-    </section>
-  );
-}
-
-function Modal({
-  title,
-  onClose,
-  children,
-}: {
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="cp-modal-overlay" onClick={onClose}>
-      <div className="settings-modal" onClick={(event) => event.stopPropagation()}>
-        <div className="settings-modal-head">
-          <h2>{title}</h2>
-          <button type="button" className="icon" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-
-        {children}
-
-        <style jsx>{`
-          .settings-modal {
-            width: min(900px, 100%);
-            max-height: calc(100vh - 48px);
-            padding: 24px;
-            overflow: auto;
-            border: 1px solid var(--line);
-            border-radius: 24px;
-            background: var(--card);
-            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.3);
-          }
-
-          .settings-modal-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 18px;
-          }
-
-          .settings-modal-head h2 {
-            margin: 0;
-          }
-        `}</style>
-      </div>
-    </div>
   );
 }
