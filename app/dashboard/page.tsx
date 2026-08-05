@@ -129,6 +129,7 @@ function DashboardContent() {
   return (
     <div className="dashboard-ultra">
       <section className="hero-ultra">
+        <div className="hero-sheen" />
         <div className="hero-accent hero-accent-a" />
         <div className="hero-accent hero-accent-b" />
         <div className="hero-wave wave-one" />
@@ -139,7 +140,13 @@ function DashboardContent() {
 
         <div className="hero-top">
           <div>
-            <span className="hero-eyebrow">RESUMEN EJECUTIVO</span>
+            <div className="hero-title-row">
+              <span className="hero-eyebrow">RESUMEN EJECUTIVO</span>
+              <span className="live-badge">
+                <i />
+                Datos actualizados
+              </span>
+            </div>
             <h2>Estado general de las obras</h2>
           </div>
 
@@ -158,7 +165,13 @@ function DashboardContent() {
             <div>
               <span>Resultado provisional</span>
               <b>{money(utilidad)}</b>
-              <small>Cobros menos gastos registrados</small>
+              <small>
+                <strong className="trend-pill">
+                  <TrendingUp size={12} />
+                  Balance actual
+                </strong>
+                Cobros menos gastos registrados
+              </small>
             </div>
           </div>
 
@@ -182,6 +195,13 @@ function DashboardContent() {
             <span>Pendiente</span>
             <b>{money(pendiente)}</b>
             <small>Por cobrar</small>
+            <div className="mini-bars">
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
           </div>
         </div>
       </section>
@@ -414,6 +434,149 @@ function DashboardContent() {
           animation: heroGradientMove 10s ease-in-out infinite;
         }
 
+
+        .hero-ultra::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background-image:
+            linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+          background-size: 30px 30px;
+          mask-image: linear-gradient(to right, #000, transparent 88%);
+        }
+
+        .hero-sheen {
+          position: absolute;
+          top: -40%;
+          bottom: -40%;
+          width: 120px;
+          left: -180px;
+          pointer-events: none;
+          transform: rotate(18deg);
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.18),
+            transparent
+          );
+          filter: blur(2px);
+          animation: sheenMove 6.5s ease-in-out infinite;
+        }
+
+        .hero-title-row {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .live-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 9px;
+          border-radius: 999px;
+          color: #dff7ff;
+          background: rgba(255,255,255,.1);
+          border: 1px solid rgba(255,255,255,.12);
+          font-size: 10px;
+          font-weight: 800;
+        }
+
+        .live-badge i {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #68f2c0;
+          box-shadow: 0 0 0 0 rgba(104,242,192,.5);
+          animation: livePulse 1.8s infinite;
+        }
+
+        .trend-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          margin-right: 7px;
+          padding: 4px 7px;
+          border-radius: 999px;
+          color: #d9fff1;
+          background: rgba(62, 220, 160, 0.14);
+          font-size: 9px;
+          font-weight: 900;
+        }
+
+        .mini-bars {
+          height: 24px;
+          display: flex;
+          align-items: end;
+          gap: 4px;
+          margin-top: 10px;
+        }
+
+        .mini-bars i {
+          flex: 1;
+          min-width: 5px;
+          border-radius: 999px;
+          background: linear-gradient(180deg, #ffffff, #79dcff);
+          animation: miniBar 1.8s ease-in-out infinite;
+        }
+
+        .mini-bars i:nth-child(1) { height: 35%; }
+        .mini-bars i:nth-child(2) { height: 70%; animation-delay: .15s; }
+        .mini-bars i:nth-child(3) { height: 48%; animation-delay: .3s; }
+        .mini-bars i:nth-child(4) { height: 88%; animation-delay: .45s; }
+        .mini-bars i:nth-child(5) { height: 58%; animation-delay: .6s; }
+
+        @keyframes sheenMove {
+          0% {
+            left: -180px;
+            opacity: 0;
+          }
+
+          15% {
+            opacity: 1;
+          }
+
+          55% {
+            opacity: 1;
+          }
+
+          75%,
+          100% {
+            left: calc(100% + 120px);
+            opacity: 0;
+          }
+        }
+
+        @keyframes livePulse {
+          0% {
+            box-shadow: 0 0 0 0 rgba(104,242,192,.5);
+          }
+
+          70% {
+            box-shadow: 0 0 0 8px rgba(104,242,192,0);
+          }
+
+          100% {
+            box-shadow: 0 0 0 0 rgba(104,242,192,0);
+          }
+        }
+
+        @keyframes miniBar {
+          0%,
+          100% {
+            transform: scaleY(.72);
+            opacity: .62;
+          }
+
+          50% {
+            transform: scaleY(1);
+            opacity: 1;
+          }
+        }
+
         @keyframes heroGradientMove {
           0%,
           100% {
@@ -509,9 +672,12 @@ function DashboardContent() {
         }
 
         .animated-card:hover {
-          transform: translateY(-5px) scale(1.015);
-          background: rgba(255, 255, 255, 0.14);
-          box-shadow: 0 18px 38px rgba(0, 0, 0, 0.14);
+          transform: translateY(-6px) scale(1.02);
+          background: rgba(255, 255, 255, 0.16);
+          border-color: rgba(255,255,255,.24);
+          box-shadow:
+            0 20px 44px rgba(0, 0, 0, 0.18),
+            0 0 0 1px rgba(138,221,255,.14);
         }
 
         .delay-1 {
@@ -1156,6 +1322,12 @@ function DashboardContent() {
           .hero-top {
             align-items: stretch;
             flex-direction: column;
+          }
+
+          .hero-title-row {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 7px;
           }
 
           .hero-report-link {
