@@ -14,6 +14,8 @@ import {
   FileText,
   NotebookPen,
   ReceiptText,
+  Sparkles,
+  TrendingUp,
   WalletCards,
 } from 'lucide-react';
 
@@ -64,14 +66,14 @@ function DashboardContent() {
         .filter(
           (bitacora) =>
             bitacora.proyectoId === proyectoId ||
-            bitacora.proyectoId === cotizacion.id
+            bitacora.proyectoId === cotizacion.id,
         )
         .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
 
       const movimientos = (data.movimientos || []).filter(
         (movimiento) =>
           movimiento.proyectoId === proyectoId ||
-          movimiento.proyectoId === cotizacion.id
+          movimiento.proyectoId === cotizacion.id,
       );
 
       const cobrado = movimientos
@@ -107,17 +109,11 @@ function DashboardContent() {
   const gastado = proyectos.reduce((acc, item) => acc + item.gastado, 0);
   const pendiente = Math.max(contratado - cobrado, 0);
   const utilidad = cobrado - gastado;
+
   const avancePromedio = activos.length
     ? Math.round(
         activos.reduce((acc, item) => acc + Number(item.avanceFisico || 0), 0) /
-          activos.length
-      )
-    : 0;
-
-  const financieroPromedio = activos.length
-    ? Math.round(
-        activos.reduce((acc, item) => acc + Number(item.avanceFinanciero || 0), 0) /
-          activos.length
+          activos.length,
       )
     : 0;
 
@@ -131,30 +127,70 @@ function DashboardContent() {
   const maxValue = Math.max(...chartItems.map((item) => item.value), 1);
 
   return (
-    <div className="dashboard-premium">
-      <section className="hero-premium">
-        <div className="hero-copy">
-          <span className="eyebrow">PANEL PRINCIPAL</span>
-          <h2>Dashboard ejecutivo de CONSTRUPLATA</h2>
-          <p>
-            Un resumen más moderno, visual y claro de tus proyectos, cobros,
-            gastos y avances.
-          </p>
+    <div className="dashboard-ultra">
+      <section className="hero-ultra">
+        <div className="hero-glow hero-glow-1" />
+        <div className="hero-glow hero-glow-2" />
+        <div className="hero-grid">
+          <div className="hero-left">
+            <div className="hero-kicker">
+              <Sparkles size={15} />
+              <span>Dashboard premium</span>
+            </div>
 
-          <div className="hero-tags">
-            <span>Proyectos</span>
-            <span>Finanzas</span>
-            <span>Bitácoras</span>
-            <span>Reportes</span>
+            <h2>
+              Controla tus <span>obras</span>
+              <br />
+              con un panel más <em>moderno</em>.
+            </h2>
+
+            <p>
+              Visualiza cobros, gastos, avances y proyectos en una sola vista,
+              con un diseño más llamativo, ejecutivo y fácil de leer.
+            </p>
+
+            <div className="hero-chips">
+              <span>Proyectos</span>
+              <span>Cobros</span>
+              <span>Bitácoras</span>
+              <span>Reportes</span>
+            </div>
           </div>
-        </div>
 
-        <div className="hero-highlight">
-          <div className="hero-highlight-card">
-            <Activity size={22} />
-            <small>Resultado provisional</small>
-            <strong>{money(utilidad)}</strong>
-            <span>{money(pendiente)} pendiente por cobrar</span>
+          <div className="hero-right">
+            <div className="hero-main-card">
+              <div className="hero-main-top">
+                <div className="mini-pill">
+                  <TrendingUp size={14} />
+                  Estado financiero
+                </div>
+                <div className="mini-badge">Hoy</div>
+              </div>
+
+              <div className="hero-main-value">{money(utilidad)}</div>
+              <div className="hero-main-label">Resultado provisional actual</div>
+
+              <div className="hero-mini-grid">
+                <div>
+                  <span>Cobrado</span>
+                  <b>{money(cobrado)}</b>
+                </div>
+                <div>
+                  <span>Pendiente</span>
+                  <b>{money(pendiente)}</b>
+                </div>
+              </div>
+            </div>
+
+            <div className="hero-floating hero-floating-a">
+              <small>Avance promedio</small>
+              <strong>{avancePromedio}%</strong>
+            </div>
+
+            <div className="hero-floating hero-floating-b">
+              <small>Proyectos activos</small>
+              <strong>{activos.length}</strong>
+            </div>
           </div>
         </div>
       </section>
@@ -165,7 +201,6 @@ function DashboardContent() {
           title="Proyectos activos"
           value={String(activos.length)}
           subtitle={`${proyectos.length} proyectos totales`}
-          badge="Activos"
           tone="blue"
           href="/proyectos"
         />
@@ -174,7 +209,6 @@ function DashboardContent() {
           title="Total cobrado"
           value={money(cobrado)}
           subtitle={`${money(pendiente)} pendiente`}
-          badge="Cobros"
           tone="cyan"
           href="/cobros"
         />
@@ -182,8 +216,7 @@ function DashboardContent() {
           icon={<ReceiptText size={22} />}
           title="Total gastado"
           value={money(gastado)}
-          subtitle="Control de egresos"
-          badge="Gastos"
+          subtitle="Control de egresos" 
           tone="violet"
           href="/gastos"
         />
@@ -192,40 +225,39 @@ function DashboardContent() {
           title="Balance provisional"
           value={money(utilidad)}
           subtitle="Cobros menos gastos"
-          badge="Balance"
           tone="green"
           href="/reportes"
         />
       </section>
 
-      <section className="main-grid">
-        <article className="panel panel-large finance-panel">
+      <section className="content-grid">
+        <article className="panel chart-panel">
           <div className="panel-head">
             <div>
-              <span className="mini-label">VISIÓN FINANCIERA</span>
-              <h3>Comparativo general</h3>
+              <span className="mini-label">VISIÓN GENERAL</span>
+              <h3>Movimiento financiero</h3>
             </div>
             <BadgeDollarSign size={22} />
           </div>
 
-          <div className="mini-resume">
+          <div className="top-summary">
             <div>
-              <span>Contratado</span>
+              <span>Monto contratado</span>
               <b>{money(contratado)}</b>
             </div>
             <div>
-              <span>Cobrado</span>
+              <span>Total cobrado</span>
               <b>{money(cobrado)}</b>
             </div>
             <div>
-              <span>Gastado</span>
+              <span>Total gastado</span>
               <b>{money(gastado)}</b>
             </div>
           </div>
 
           <div className="bars-wrap">
             {chartItems.map((item) => {
-              const height = Math.max(14, Math.round((item.value / maxValue) * 100));
+              const height = Math.max(16, Math.round((item.value / maxValue) * 100));
               return (
                 <div className="bar-col" key={item.label}>
                   <span className="bar-value">{compactMoney(item.value)}</span>
@@ -239,39 +271,50 @@ function DashboardContent() {
           </div>
         </article>
 
-        <article className="panel panel-side progress-panel">
+        <article className="panel side-panel">
           <div className="panel-head">
             <div>
-              <span className="mini-label">AVANCES</span>
-              <h3>Indicadores clave</h3>
+              <span className="mini-label">INDICADORES</span>
+              <h3>Rendimiento</h3>
             </div>
             <BarChart3 size={22} />
           </div>
 
-          <div className="ring-grid">
-            <RingPercent label="Avance físico" value={avancePromedio} color="blue" />
-            <RingPercent
-              label="Avance financiero"
-              value={financieroPromedio}
-              color="green"
-            />
+          <div className="insight-card blue-bg">
+            <div className="insight-top">
+              <span>Avance físico</span>
+              <strong>{avancePromedio}%</strong>
+            </div>
+            <div className="progress big">
+              <i style={{ width: `${avancePromedio}%` }} />
+            </div>
           </div>
 
-          <div className="line-kpis">
-            <div>
-              <span>Cotizaciones aprobadas</span>
-              <b>{proyectos.length}</b>
+          <div className="insight-card green-bg">
+            <div className="insight-top">
+              <span>Proyectos aprobados</span>
+              <strong>{proyectos.length}</strong>
             </div>
+            <div className="progress big green">
+              <i style={{ width: `${Math.min(proyectos.length * 10, 100)}%` }} />
+            </div>
+          </div>
+
+          <div className="mini-dual">
             <div>
               <span>Disponible por cobrar</span>
               <b>{money(pendiente)}</b>
+            </div>
+            <div>
+              <span>Utilidad estimada</span>
+              <b>{money(utilidad)}</b>
             </div>
           </div>
         </article>
       </section>
 
-      <section className="main-grid">
-        <article className="panel panel-large">
+      <section className="content-grid">
+        <article className="panel projects-panel">
           <div className="panel-head">
             <div>
               <span className="mini-label">SEGUIMIENTO</span>
@@ -285,9 +328,9 @@ function DashboardContent() {
 
           <div className="project-list">
             {activos.length ? (
-              activos.slice(0, 5).map((item) => (
+              activos.slice(0, 4).map((item) => (
                 <Link href="/proyectos" key={item.id} className="project-item">
-                  <div className="project-left">
+                  <div className="project-main">
                     <div className="project-icon">
                       <CalendarRange size={18} />
                     </div>
@@ -297,7 +340,7 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  <div className="project-middle">
+                  <div className="project-progress">
                     <div className="row-title">
                       <span>Avance</span>
                       <strong>{item.avanceFisico}%</strong>
@@ -307,8 +350,8 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  <div className="project-right">
-                    <span>Balance</span>
+                  <div className="project-balance">
+                    <span>Balance pendiente</span>
                     <b>{money(item.pendiente)}</b>
                   </div>
                 </Link>
@@ -319,13 +362,13 @@ function DashboardContent() {
           </div>
         </article>
 
-        <article className="panel panel-side">
+        <article className="panel quick-panel">
           <div className="panel-head">
             <div>
               <span className="mini-label">ACCESOS RÁPIDOS</span>
-              <h3>Crear y registrar</h3>
+              <h3>Acciones rápidas</h3>
             </div>
-            <FileText size={20} />
+            <Activity size={20} />
           </div>
 
           <div className="quick-grid">
@@ -352,113 +395,225 @@ function DashboardContent() {
       </section>
 
       <style jsx>{`
-        .dashboard-premium {
+        .dashboard-ultra {
           display: grid;
           gap: 18px;
         }
 
-        .hero-premium {
+        .hero-ultra {
           position: relative;
           overflow: hidden;
-          display: grid;
-          grid-template-columns: 1.25fr 0.75fr;
-          gap: 20px;
-          align-items: center;
-          padding: 28px;
-          border-radius: 28px;
-          color: #fff;
+          border-radius: 32px;
+          padding: 32px;
           background:
-            radial-gradient(circle at 85% 15%, rgba(70, 180, 255, 0.4), transparent 22%),
-            radial-gradient(circle at 10% 100%, rgba(40, 105, 255, 0.35), transparent 32%),
-            linear-gradient(135deg, #03162b 0%, #063767 48%, #0a6cb0 100%);
-          box-shadow: 0 26px 60px rgba(3, 44, 92, 0.24);
+            linear-gradient(135deg, #031226 0%, #07386b 45%, #0c85d9 100%);
+          box-shadow: 0 28px 70px rgba(8, 59, 122, 0.28);
         }
 
-        .hero-premium::after {
-          content: '';
+        .hero-grid {
+          position: relative;
+          z-index: 2;
+          display: grid;
+          grid-template-columns: 1.15fr 0.85fr;
+          gap: 24px;
+          align-items: center;
+        }
+
+        .hero-glow {
           position: absolute;
-          right: -120px;
-          top: -90px;
+          border-radius: 50%;
+          filter: blur(10px);
+          opacity: 0.5;
+        }
+
+        .hero-glow-1 {
           width: 320px;
           height: 320px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.06);
+          right: -80px;
+          top: -70px;
+          background: rgba(120, 220, 255, 0.28);
         }
 
-        .hero-copy,
-        .hero-highlight {
-          position: relative;
-          z-index: 1;
+        .hero-glow-2 {
+          width: 280px;
+          height: 280px;
+          left: -90px;
+          bottom: -130px;
+          background: rgba(57, 123, 255, 0.2);
         }
 
-        .eyebrow {
-          display: inline-block;
-          font-size: 11px;
-          font-weight: 900;
-          letter-spacing: 0.16em;
-          color: #a8dbff;
+        .hero-kicker {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 9px 14px;
+          border-radius: 999px;
+          color: #d8eeff;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          font-size: 12px;
+          font-weight: 800;
+          backdrop-filter: blur(8px);
         }
 
-        .hero-premium h2 {
-          margin: 10px 0 10px;
-          font-size: clamp(30px, 4vw, 48px);
-          line-height: 1.02;
-          letter-spacing: -0.03em;
+        .hero-left h2 {
+          margin: 18px 0 12px;
+          color: #fff;
+          font-size: clamp(38px, 5vw, 62px);
+          line-height: 0.98;
+          letter-spacing: -0.04em;
         }
 
-        .hero-premium p {
+        .hero-left h2 span {
+          color: #79d7ff;
+        }
+
+        .hero-left h2 em {
+          font-style: normal;
+          color: #c3edff;
+        }
+
+        .hero-left p {
           margin: 0;
           max-width: 720px;
-          color: rgba(255, 255, 255, 0.82);
-          line-height: 1.6;
+          color: rgba(255, 255, 255, 0.84);
+          font-size: 16px;
+          line-height: 1.7;
         }
 
-        .hero-tags {
+        .hero-chips {
           display: flex;
           flex-wrap: wrap;
           gap: 10px;
-          margin-top: 18px;
+          margin-top: 20px;
         }
 
-        .hero-tags span {
-          padding: 8px 12px;
+        .hero-chips span {
+          padding: 9px 14px;
           border-radius: 999px;
           font-size: 12px;
-          font-weight: 700;
+          font-weight: 800;
+          color: #fff;
           background: rgba(255, 255, 255, 0.12);
           border: 1px solid rgba(255, 255, 255, 0.12);
         }
 
-        .hero-highlight {
+        .hero-right {
+          position: relative;
+          min-height: 280px;
           display: flex;
-          justify-content: flex-end;
+          align-items: center;
+          justify-content: center;
         }
 
-        .hero-highlight-card {
+        .hero-main-card {
           width: 100%;
-          max-width: 280px;
-          display: grid;
-          gap: 8px;
-          padding: 20px;
-          border-radius: 22px;
-          background: rgba(255, 255, 255, 0.12);
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          backdrop-filter: blur(14px);
+          max-width: 360px;
+          padding: 22px;
+          border-radius: 28px;
+          background: rgba(255, 255, 255, 0.14);
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          backdrop-filter: blur(16px);
+          box-shadow: 0 24px 50px rgba(0, 0, 0, 0.16);
         }
 
-        .hero-highlight-card small {
-          color: rgba(255, 255, 255, 0.78);
-          font-size: 12px;
+        .hero-main-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
         }
 
-        .hero-highlight-card strong {
-          font-size: 28px;
+        .mini-pill,
+        .mini-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 12px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 800;
+          color: #fff;
+          background: rgba(255, 255, 255, 0.14);
+        }
+
+        .hero-main-value {
+          margin-top: 18px;
+          color: #fff;
+          font-size: clamp(28px, 4vw, 46px);
           line-height: 1;
+          font-weight: 900;
         }
 
-        .hero-highlight-card span {
-          color: rgba(255, 255, 255, 0.75);
-          font-size: 12px;
+        .hero-main-label {
+          margin-top: 10px;
+          color: rgba(255, 255, 255, 0.78);
+          font-size: 14px;
+        }
+
+        .hero-mini-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+          margin-top: 18px;
+        }
+
+        .hero-mini-grid > div {
+          padding: 14px;
+          border-radius: 18px;
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .hero-mini-grid span,
+        .hero-mini-grid b {
+          display: block;
+        }
+
+        .hero-mini-grid span {
+          color: rgba(255, 255, 255, 0.72);
+          font-size: 11px;
+        }
+
+        .hero-mini-grid b {
+          margin-top: 6px;
+          color: #fff;
+          font-size: 16px;
+          overflow-wrap: anywhere;
+        }
+
+        .hero-floating {
+          position: absolute;
+          padding: 12px 14px;
+          border-radius: 18px;
+          background: rgba(255, 255, 255, 0.92);
+          box-shadow: 0 18px 35px rgba(0, 0, 0, 0.16);
+        }
+
+        .hero-floating small,
+        .hero-floating strong {
+          display: block;
+        }
+
+        .hero-floating small {
+          color: #57708e;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .hero-floating strong {
+          margin-top: 4px;
+          color: #0b2648;
+          font-size: 22px;
+        }
+
+        .hero-floating-a {
+          left: 0;
+          bottom: 16px;
+        }
+
+        .hero-floating-b {
+          right: 6px;
+          top: 10px;
         }
 
         .stats-grid {
@@ -467,7 +622,7 @@ function DashboardContent() {
           gap: 14px;
         }
 
-        .main-grid {
+        .content-grid {
           display: grid;
           grid-template-columns: 1.35fr 0.65fr;
           gap: 16px;
@@ -476,7 +631,7 @@ function DashboardContent() {
         .panel {
           background: var(--card);
           border: 1px solid var(--line);
-          border-radius: 24px;
+          border-radius: 26px;
           padding: 20px;
           box-shadow: var(--soft-shadow);
         }
@@ -511,40 +666,44 @@ function DashboardContent() {
           font-weight: 800;
         }
 
-        .mini-resume {
+        .top-summary {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 10px;
+          gap: 12px;
           margin-top: 18px;
         }
 
-        .mini-resume > div {
+        .top-summary > div,
+        .mini-dual > div {
           padding: 14px;
+          border-radius: 18px;
           background: var(--surface);
-          border-radius: 16px;
         }
 
-        .mini-resume span,
-        .mini-resume b {
+        .top-summary span,
+        .top-summary b,
+        .mini-dual span,
+        .mini-dual b {
           display: block;
         }
 
-        .mini-resume span {
+        .top-summary span,
+        .mini-dual span {
           color: var(--muted);
           font-size: 11px;
         }
 
-        .mini-resume b {
+        .top-summary b,
+        .mini-dual b {
           margin-top: 6px;
           color: var(--text);
           font-size: 18px;
-          line-height: 1.2;
           overflow-wrap: anywhere;
         }
 
         .bars-wrap {
           margin-top: 22px;
-          height: 260px;
+          height: 280px;
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 16px;
@@ -571,10 +730,10 @@ function DashboardContent() {
         .bar-base {
           position: relative;
           height: 100%;
-          border-radius: 18px;
+          min-height: 180px;
+          border-radius: 22px;
           overflow: hidden;
           background: var(--surface);
-          min-height: 170px;
         }
 
         .bar-base i {
@@ -582,23 +741,23 @@ function DashboardContent() {
           left: 0;
           right: 0;
           bottom: 0;
-          border-radius: 18px;
+          border-radius: 22px;
         }
 
         .bar-base i.c1 {
-          background: linear-gradient(180deg, #50d3ff, #1c78f0);
+          background: linear-gradient(180deg, #61d6ff, #1c78f0);
         }
 
         .bar-base i.c2 {
-          background: linear-gradient(180deg, #55e8d9, #12a89b);
+          background: linear-gradient(180deg, #55edd0, #12b39f);
         }
 
         .bar-base i.c3 {
-          background: linear-gradient(180deg, #b18cff, #7752ff);
+          background: linear-gradient(180deg, #bd95ff, #7a51ff);
         }
 
         .bar-base i.c4 {
-          background: linear-gradient(180deg, #8ee55d, #43b02a);
+          background: linear-gradient(180deg, #9ce86e, #52b631);
         }
 
         .bar-col small {
@@ -607,94 +766,146 @@ function DashboardContent() {
           font-weight: 700;
         }
 
-        .ring-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 14px;
-          margin-top: 22px;
+        .insight-card {
+          padding: 16px;
+          border-radius: 20px;
+          margin-top: 16px;
         }
 
-        .line-kpis {
-          display: grid;
+        .blue-bg {
+          background: linear-gradient(135deg, #eef7ff, #e5f1ff);
+        }
+
+        .green-bg {
+          background: linear-gradient(135deg, #edfcef, #e6faf0);
+        }
+
+        .insight-top {
+          display: flex;
+          justify-content: space-between;
           gap: 10px;
-          margin-top: 20px;
+          margin-bottom: 12px;
         }
 
-        .line-kpis > div {
-          padding: 14px;
-          border-radius: 16px;
-          background: var(--surface);
+        .insight-top span {
+          color: #58718e;
+          font-size: 12px;
+          font-weight: 700;
         }
 
-        .line-kpis span,
-        .line-kpis b {
+        .insight-top strong {
+          color: #0d2545;
+          font-size: 22px;
+        }
+
+        .progress {
+          height: 8px;
+          overflow: hidden;
+          border-radius: 999px;
+          background: var(--line);
+        }
+
+        .progress.big {
+          height: 10px;
+        }
+
+        .progress i {
           display: block;
+          height: 100%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, #1c78f0, #37b8ff);
         }
 
-        .line-kpis span {
-          color: var(--muted);
-          font-size: 11px;
+        .progress.green i {
+          background: linear-gradient(90deg, #34b76b, #8ce75d);
         }
 
-        .line-kpis b {
-          margin-top: 5px;
-          color: var(--text);
-          font-size: 18px;
-          overflow-wrap: anywhere;
+        .mini-dual {
+          display: grid;
+          gap: 12px;
+          margin-top: 16px;
         }
 
-        .project-list {
+        .project-list,
+        .quick-grid {
           display: grid;
           gap: 12px;
           margin-top: 18px;
         }
 
+        .project-item,
+        .quick-action {
+          border-radius: 20px;
+          background: var(--surface);
+          border: 1px solid var(--line);
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .project-item:hover,
+        .quick-action:hover,
+        .card-stat:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 18px 35px rgba(23, 105, 224, 0.12);
+        }
+
         .project-item {
           display: grid;
-          grid-template-columns: 1.1fr 1fr auto;
+          grid-template-columns: 1.05fr 1fr auto;
           gap: 14px;
           align-items: center;
           padding: 16px;
-          border-radius: 18px;
-          background: var(--surface);
-          border: 1px solid var(--line);
         }
 
-        .project-left {
+        .project-main {
           display: flex;
           align-items: center;
           gap: 12px;
           min-width: 0;
         }
 
-        .project-icon {
-          width: 42px;
-          height: 42px;
+        .project-icon,
+        .qa-icon {
+          width: 48px;
+          height: 48px;
           display: grid;
           place-items: center;
-          border-radius: 14px;
-          color: #1c78f0;
-          background: #ecf5ff;
+          border-radius: 16px;
           flex: 0 0 auto;
+          color: #1c78f0;
+          background: #eaf4ff;
         }
 
-        .project-left b,
-        .project-left span,
-        .project-right span,
-        .project-right b {
+        .project-main b,
+        .project-main span,
+        .project-balance span,
+        .project-balance b {
           display: block;
         }
 
-        .project-left b {
+        .project-main b,
+        .qa-copy b {
           color: var(--text);
-          font-size: 14px;
+          font-size: 16px;
+          line-height: 1.2;
         }
 
-        .project-left span,
-        .project-right span {
+        .project-main span,
+        .project-balance span,
+        .qa-copy span {
           margin-top: 4px;
           color: var(--muted);
-          font-size: 11px;
+          font-size: 12px;
+        }
+
+        .project-balance {
+          text-align: right;
+        }
+
+        .project-balance b {
+          margin-top: 5px;
+          color: var(--text);
+          font-size: 14px;
+          overflow-wrap: anywhere;
         }
 
         .row-title {
@@ -710,35 +921,21 @@ function DashboardContent() {
           color: var(--text);
         }
 
-        .progress {
-          height: 8px;
-          overflow: hidden;
-          border-radius: 999px;
-          background: var(--line);
-        }
-
-        .progress i {
-          display: block;
-          height: 100%;
-          border-radius: inherit;
-          background: linear-gradient(90deg, #1c78f0, #34b6ff);
-        }
-
-        .project-right {
-          text-align: right;
-        }
-
-        .project-right b {
-          margin-top: 4px;
-          color: var(--text);
-          font-size: 14px;
-          overflow-wrap: anywhere;
-        }
-
-        .quick-grid {
+        .quick-action {
           display: grid;
+          grid-template-columns: auto 1fr auto;
+          align-items: center;
           gap: 12px;
-          margin-top: 18px;
+          padding: 16px;
+        }
+
+        .qa-copy b,
+        .qa-copy span {
+          display: block;
+        }
+
+        .qa-arrow {
+          color: #1c78f0;
         }
 
         .empty-state {
@@ -752,16 +949,37 @@ function DashboardContent() {
           background: #0d1b2f !important;
         }
 
-        :global(html[data-theme='dark']) .mini-resume > div,
+        :global(html[data-theme='dark']) .top-summary > div,
         :global(html[data-theme='dark']) .bar-base,
-        :global(html[data-theme='dark']) .line-kpis > div,
+        :global(html[data-theme='dark']) .mini-dual > div,
         :global(html[data-theme='dark']) .project-item,
         :global(html[data-theme='dark']) .quick-action {
-          background: #0a1628 !important;
+          background: #091425 !important;
         }
 
-        :global(html[data-theme='dark']) .project-icon {
-          background: rgba(28, 120, 240, 0.16);
+        :global(html[data-theme='dark']) .blue-bg {
+          background: linear-gradient(135deg, rgba(28, 120, 240, 0.16), rgba(28, 120, 240, 0.08));
+        }
+
+        :global(html[data-theme='dark']) .green-bg {
+          background: linear-gradient(135deg, rgba(52, 183, 107, 0.16), rgba(52, 183, 107, 0.08));
+        }
+
+        :global(html[data-theme='dark']) .insight-top span {
+          color: #9ab0c9;
+        }
+
+        :global(html[data-theme='dark']) .insight-top strong,
+        :global(html[data-theme='dark']) .hero-floating strong {
+          color: #eaf2ff;
+        }
+
+        :global(html[data-theme='dark']) .hero-floating {
+          background: rgba(9, 20, 37, 0.95);
+        }
+
+        :global(html[data-theme='dark']) .hero-floating small {
+          color: #a6b9d1;
         }
 
         @media (max-width: 1100px) {
@@ -769,31 +987,40 @@ function DashboardContent() {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
-          .main-grid {
+          .content-grid,
+          .hero-grid {
             grid-template-columns: 1fr;
+          }
+
+          .hero-right {
+            min-height: auto;
+            padding-top: 18px;
+          }
+
+          .hero-floating-a,
+          .hero-floating-b {
+            position: static;
+          }
+
+          .hero-right {
+            display: grid;
+            gap: 14px;
           }
         }
 
         @media (max-width: 760px) {
-          .hero-premium {
-            grid-template-columns: 1fr;
-            padding: 20px;
-            border-radius: 22px;
+          .hero-ultra {
+            padding: 22px;
+            border-radius: 24px;
           }
 
-          .hero-highlight {
-            justify-content: flex-start;
+          .hero-left h2 {
+            font-size: 38px;
           }
 
-          .hero-highlight-card {
-            max-width: none;
-          }
-
-          .stats-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .mini-resume {
+          .stats-grid,
+          .top-summary,
+          .content-grid {
             grid-template-columns: 1fr;
           }
 
@@ -806,39 +1033,16 @@ function DashboardContent() {
             min-height: 140px;
           }
 
-          .ring-grid {
-            grid-template-columns: 1fr 1fr;
-          }
-
           .project-item {
             grid-template-columns: 1fr;
-            text-align: left;
           }
 
-          .project-right {
+          .project-balance {
             text-align: left;
           }
 
           .panel-head h3 {
             font-size: 22px;
-          }
-        }
-
-        @media (max-width: 520px) {
-          .ring-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .bars-wrap {
-            grid-template-columns: repeat(4, minmax(50px, 1fr));
-          }
-
-          .bar-value {
-            font-size: 9px;
-          }
-
-          .bar-col small {
-            font-size: 10px;
           }
         }
       `}</style>
@@ -851,7 +1055,6 @@ function CardStat({
   title,
   value,
   subtitle,
-  badge,
   tone,
   href,
 }: {
@@ -859,15 +1062,13 @@ function CardStat({
   title: string;
   value: string;
   subtitle: string;
-  badge: string;
   tone: 'blue' | 'cyan' | 'violet' | 'green';
   href: string;
 }) {
   return (
     <Link href={href} className={`card-stat ${tone}`}>
-      <div className="card-head">
+      <div className="card-top">
         <div className="card-icon">{icon}</div>
-        <span className="badge">{badge}</span>
       </div>
 
       <div className="card-body">
@@ -880,59 +1081,40 @@ function CardStat({
         .card-stat {
           display: grid;
           gap: 16px;
-          padding: 18px;
+          padding: 20px;
           border-radius: 24px;
           border: 1px solid var(--line);
           background: var(--card);
           box-shadow: var(--soft-shadow);
-          transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
 
-        .card-stat:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 20px 40px rgba(23, 105, 224, 0.12);
-        }
-
-        .card-head {
+        .card-top {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 10px;
         }
 
         .card-icon {
-          width: 54px;
-          height: 54px;
+          width: 56px;
+          height: 56px;
           display: grid;
           place-items: center;
           border-radius: 18px;
-          flex: 0 0 auto;
-        }
-
-        .badge {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          padding: 7px 12px;
-          border-radius: 999px;
-          font-size: 11px;
-          font-weight: 900;
-          white-space: nowrap;
         }
 
         .card-body h4 {
           margin: 0;
           color: var(--text);
-          font-size: 20px;
-          line-height: 1.15;
+          font-size: 18px;
+          line-height: 1.2;
         }
 
         .card-body b {
           display: block;
           margin-top: 14px;
           color: var(--text);
-          font-size: 26px;
-          line-height: 1.1;
+          font-size: 28px;
+          line-height: 1.08;
           overflow-wrap: anywhere;
         }
 
@@ -946,128 +1128,25 @@ function CardStat({
 
         .blue .card-icon {
           color: #1c78f0;
-          background: #eaf4ff;
-        }
-
-        .blue .badge {
-          color: #1c78f0;
-          background: #eef5ff;
+          background: linear-gradient(135deg, #eef7ff, #dbeeff);
         }
 
         .cyan .card-icon {
           color: #0aaec0;
-          background: #e8fbfd;
-        }
-
-        .cyan .badge {
-          color: #0aaec0;
-          background: #ecfeff;
+          background: linear-gradient(135deg, #e8fbfd, #d7fbff);
         }
 
         .violet .card-icon {
           color: #7752ff;
-          background: #f2edff;
-        }
-
-        .violet .badge {
-          color: #7752ff;
-          background: #f4f0ff;
+          background: linear-gradient(135deg, #f2edff, #ebe2ff);
         }
 
         .green .card-icon {
-          color: #3aa23a;
-          background: #edf9ed;
-        }
-
-        .green .badge {
-          color: #3aa23a;
-          background: #f0fcf0;
-        }
-
-        @media (max-width: 760px) {
-          .card-body h4 {
-            font-size: 18px;
-          }
-
-          .card-body b {
-            font-size: 22px;
-          }
+          color: #38a34d;
+          background: linear-gradient(135deg, #edf9ed, #dff7df);
         }
       `}</style>
     </Link>
-  );
-}
-
-function RingPercent({
-  value,
-  label,
-  color,
-}: {
-  value: number;
-  label: string;
-  color: 'blue' | 'green';
-}) {
-  const safe = Math.max(0, Math.min(100, value));
-  const tone = color === 'green' ? '#14a88f' : '#1c78f0';
-
-  return (
-    <div className="ring-box">
-      <div
-        className="ring"
-        style={{
-          background: `conic-gradient(${tone} ${safe * 3.6}deg, var(--line) 0deg)`,
-        }}
-      >
-        <div className="inner">
-          <b>{safe}%</b>
-        </div>
-      </div>
-      <span>{label}</span>
-
-      <style jsx>{`
-        .ring-box {
-          display: grid;
-          justify-items: center;
-          gap: 10px;
-          padding: 14px;
-          border-radius: 18px;
-          background: var(--surface);
-        }
-
-        .ring {
-          width: 118px;
-          height: 118px;
-          border-radius: 50%;
-          display: grid;
-          place-items: center;
-        }
-
-        .inner {
-          width: 84px;
-          height: 84px;
-          border-radius: 50%;
-          display: grid;
-          place-items: center;
-          background: var(--card);
-        }
-
-        .inner b {
-          color: var(--text);
-          font-size: 22px;
-        }
-
-        .ring-box span {
-          color: var(--muted);
-          font-size: 12px;
-          font-weight: 700;
-          text-align: center;
-        }
-
-        :global(html[data-theme='dark']) .inner {
-          background: #0d1b2f;
-        }
-      `}</style>
-    </div>
   );
 }
 
@@ -1085,73 +1164,11 @@ function QuickAction({
   return (
     <Link href={href} className="quick-action">
       <div className="qa-icon">{icon}</div>
-
       <div className="qa-copy">
         <b>{title}</b>
         <span>{text}</span>
       </div>
-
       <ArrowUpRight size={18} className="qa-arrow" />
-
-      <style jsx>{`
-        .quick-action {
-          display: grid;
-          grid-template-columns: auto 1fr auto;
-          align-items: center;
-          gap: 12px;
-          padding: 16px;
-          border-radius: 18px;
-          background: var(--surface);
-          border: 1px solid var(--line);
-          transition: transform 0.18s ease, box-shadow 0.18s ease;
-        }
-
-        .quick-action:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 16px 32px rgba(23, 105, 224, 0.1);
-        }
-
-        .qa-icon {
-          width: 48px;
-          height: 48px;
-          display: grid;
-          place-items: center;
-          border-radius: 16px;
-          color: #1c78f0;
-          background: #ebf5ff;
-        }
-
-        .qa-copy b,
-        .qa-copy span {
-          display: block;
-        }
-
-        .qa-copy b {
-          color: var(--text);
-          font-size: 16px;
-          line-height: 1.2;
-        }
-
-        .qa-copy span {
-          margin-top: 5px;
-          color: var(--muted);
-          font-size: 13px;
-        }
-
-        .qa-arrow {
-          color: #1c78f0;
-        }
-
-        @media (max-width: 760px) {
-          .qa-copy b {
-            font-size: 15px;
-          }
-
-          .qa-copy span {
-            font-size: 12px;
-          }
-        }
-      `}</style>
     </Link>
   );
 }
