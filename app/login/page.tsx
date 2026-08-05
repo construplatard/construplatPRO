@@ -136,18 +136,17 @@ export default function LoginPage() {
         '1'
       );
 
+      const nombreUsuario =
+        profile?.nombre ||
+        data.user.user_metadata?.nombre ||
+        data.user.email?.split('@')[0] ||
+        'Usuario';
+
       localStorage.setItem(
         'cp-user',
         JSON.stringify({
           id: data.user.id,
-          nombre:
-            profile?.nombre ||
-            data.user.user_metadata
-              ?.nombre ||
-            data.user.email?.split(
-              '@'
-            )[0] ||
-            'Usuario',
+          nombre: nombreUsuario,
           correo:
             profile?.correo ||
             data.user.email ||
@@ -163,6 +162,32 @@ export default function LoginPage() {
             false,
         })
       );
+
+      const userAgent = navigator.userAgent;
+      const dispositivo = /Mobi|Android|iPhone|iPad/i.test(
+        userAgent
+      )
+        ? 'Teléfono o tableta'
+        : 'Computadora';
+
+      const navegador = userAgent.includes('Edg/')
+        ? 'Microsoft Edge'
+        : userAgent.includes('Chrome/')
+          ? 'Google Chrome'
+          : userAgent.includes('Firefox/')
+            ? 'Mozilla Firefox'
+            : userAgent.includes('Safari/')
+              ? 'Safari'
+              : 'Otro navegador';
+
+      await supabase.from('auditoria_accesos').insert({
+        user_id: data.user.id,
+        nombre: nombreUsuario,
+        correo: data.user.email || correo,
+        evento: 'Inicio de sesión',
+        dispositivo,
+        navegador,
+      });
 
       router.replace('/dashboard');
     } catch {
