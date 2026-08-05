@@ -1,6 +1,10 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import {
+  FormEvent,
+  useEffect,
+  useState,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
@@ -15,15 +19,54 @@ type RoleJoin =
   | { nombre?: string }[]
   | null;
 
+const frases = [
+  {
+    linea1: 'Controla cada detalle.',
+    linea2: 'Construye con visión.',
+  },
+  {
+    linea1: 'Planifica con precisión.',
+    linea2: 'Ejecuta con control.',
+  },
+  {
+    linea1: 'Toda tu obra conectada.',
+    linea2: 'Desde cualquier lugar.',
+  },
+];
+
 export default function LoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] =
+    useState('');
   const [showPassword, setShowPassword] =
     useState(false);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [loading, setLoading] =
+    useState(false);
+  const [message, setMessage] =
+    useState('');
+  const [fraseIndex, setFraseIndex] =
+    useState(0);
+  const [visible, setVisible] =
+    useState(true);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setVisible(false);
+
+      window.setTimeout(() => {
+        setFraseIndex(
+          (current) =>
+            (current + 1) % frases.length
+        );
+        setVisible(true);
+      }, 350);
+    }, 5500);
+
+    return () =>
+      window.clearInterval(interval);
+  }, []);
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>
@@ -32,7 +75,8 @@ export default function LoginPage() {
     setMessage('');
     setLoading(true);
 
-    const correo = email.trim().toLowerCase();
+    const correo =
+      email.trim().toLowerCase();
 
     if (!correo || !password) {
       setMessage(
@@ -61,13 +105,14 @@ export default function LoginPage() {
         return;
       }
 
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select(
-          'id,nombre,correo,activo,es_super_admin,roles(nombre)'
-        )
-        .eq('id', data.user.id)
-        .maybeSingle();
+      const { data: profile } =
+        await supabase
+          .from('user_profiles')
+          .select(
+            'id,nombre,correo,activo,es_super_admin,roles(nombre)'
+          )
+          .eq('id', data.user.id)
+          .maybeSingle();
 
       if (profile?.activo === false) {
         await supabase.auth.signOut();
@@ -78,20 +123,30 @@ export default function LoginPage() {
         return;
       }
 
-      const roles = profile?.roles as RoleJoin;
-      const roleName = Array.isArray(roles)
-        ? roles[0]?.nombre
-        : roles?.nombre;
+      const roles =
+        profile?.roles as RoleJoin;
 
-      localStorage.setItem('cp-auth', '1');
+      const roleName =
+        Array.isArray(roles)
+          ? roles[0]?.nombre
+          : roles?.nombre;
+
+      localStorage.setItem(
+        'cp-auth',
+        '1'
+      );
+
       localStorage.setItem(
         'cp-user',
         JSON.stringify({
           id: data.user.id,
           nombre:
             profile?.nombre ||
-            data.user.user_metadata?.nombre ||
-            data.user.email?.split('@')[0] ||
+            data.user.user_metadata
+              ?.nombre ||
+            data.user.email?.split(
+              '@'
+            )[0] ||
             'Usuario',
           correo:
             profile?.correo ||
@@ -101,10 +156,11 @@ export default function LoginPage() {
             roleName ||
             (profile?.es_super_admin
               ? 'Administrador'
-              : data.user.user_metadata?.rol ||
-                'Usuario'),
+              : data.user.user_metadata
+                  ?.rol || 'Usuario'),
           esSuperAdmin:
-            profile?.es_super_admin || false,
+            profile?.es_super_admin ||
+            false,
         })
       );
 
@@ -116,6 +172,8 @@ export default function LoginPage() {
       setLoading(false);
     }
   }
+
+  const frase = frases[fraseIndex];
 
   return (
     <main className="login-page">
@@ -134,30 +192,54 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="hero-copy">
+        <div
+          className={`hero-copy ${
+            visible ? 'visible' : ''
+          }`}
+        >
           <span className="eyebrow">
             PLATAFORMA EMPRESARIAL
           </span>
 
           <h1>
-            Controla cada detalle.
-            <em> Construye con visión.</em>
+            {frase.linea1}
+            <em>{frase.linea2}</em>
           </h1>
 
           <p>
-            Proyectos, cotizaciones, finanzas,
-            bitácoras y reportes en un solo sistema.
+            Proyectos, cotizaciones,
+            finanzas, bitácoras y reportes
+            en un solo sistema.
           </p>
 
-          <div className="hero-tags">
-            <span>Control</span>
-            <span>Planificación</span>
-            <span>Supervisión</span>
+          <div className="phrase-dots">
+            {frases.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                className={
+                  index === fraseIndex
+                    ? 'active'
+                    : ''
+                }
+                onClick={() => {
+                  setVisible(false);
+                  window.setTimeout(() => {
+                    setFraseIndex(index);
+                    setVisible(true);
+                  }, 250);
+                }}
+                aria-label={`Frase ${
+                  index + 1
+                }`}
+              />
+            ))}
           </div>
         </div>
 
         <div className="brand-foot">
-          CONSTRUPLATA PRO · República Dominicana
+          CONSTRUPLATA PRO · República
+          Dominicana
         </div>
       </section>
 
@@ -174,7 +256,8 @@ export default function LoginPage() {
           <h2>Bienvenido</h2>
 
           <p className="subtitle">
-            Ingresa al sistema con tus credenciales.
+            Ingresa al sistema con tus
+            credenciales.
           </p>
 
           <label>
@@ -184,7 +267,9 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(event) => {
-                setEmail(event.target.value);
+                setEmail(
+                  event.target.value
+                );
                 setMessage('');
               }}
               placeholder="admin@construplata.com"
@@ -204,7 +289,9 @@ export default function LoginPage() {
                 }
                 value={password}
                 onChange={(event) => {
-                  setPassword(event.target.value);
+                  setPassword(
+                    event.target.value
+                  );
                   setMessage('');
                 }}
                 placeholder="••••••••"
@@ -298,38 +385,6 @@ export default function LoginPage() {
           );
         }
 
-        .blue-panel::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background-image:
-            linear-gradient(
-              rgba(255, 255, 255, 0.035)
-                1px,
-              transparent 1px
-            ),
-            linear-gradient(
-              90deg,
-              rgba(255, 255, 255, 0.035)
-                1px,
-              transparent 1px
-            );
-          background-size: 48px 48px;
-          mask-image: linear-gradient(
-            to bottom,
-            rgba(0, 0, 0, 0.72),
-            transparent
-          );
-        }
-
-        .brand,
-        .hero-copy,
-        .brand-foot {
-          position: relative;
-          z-index: 1;
-        }
-
         .brand {
           display: flex;
           align-items: center;
@@ -365,6 +420,16 @@ export default function LoginPage() {
         .hero-copy {
           max-width: 660px;
           margin: auto 0;
+          opacity: 0;
+          transform: translateY(12px);
+          transition:
+            opacity 0.35s ease,
+            transform 0.35s ease;
+        }
+
+        .hero-copy.visible {
+          opacity: 1;
+          transform: translateY(0);
         }
 
         .eyebrow {
@@ -399,22 +464,27 @@ export default function LoginPage() {
           opacity: 0.82;
         }
 
-        .hero-tags {
+        .phrase-dots {
           display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          margin-top: 28px;
+          gap: 8px;
+          margin-top: 26px;
         }
 
-        .hero-tags span {
-          padding: 9px 13px;
-          border: 1px solid
-            rgba(255, 255, 255, 0.18);
+        .phrase-dots button {
+          width: 9px;
+          height: 9px;
+          padding: 0;
+          border: 0;
           border-radius: 999px;
           background:
-            rgba(255, 255, 255, 0.08);
-          font-size: 12px;
-          font-weight: 800;
+            rgba(255, 255, 255, 0.35);
+          cursor: pointer;
+          transition: width 0.25s ease;
+        }
+
+        .phrase-dots button.active {
+          width: 28px;
+          background: white;
         }
 
         .brand-foot {
@@ -423,8 +493,6 @@ export default function LoginPage() {
         }
 
         .form-panel {
-          position: relative;
-          z-index: 1;
           display: grid;
           place-items: center;
           padding: 28px 34px 28px 0;
@@ -436,15 +504,9 @@ export default function LoginPage() {
           padding: 38px;
           border: 1px solid #d7e2ea;
           border-radius: 30px;
-          background: rgba(
-            255,
-            255,
-            255,
-            0.97
-          );
+          background: white;
           box-shadow: 0 26px 70px
             rgba(23, 55, 91, 0.15);
-          backdrop-filter: blur(14px);
         }
 
         .secure-badge {
@@ -464,13 +526,11 @@ export default function LoginPage() {
           margin: 24px 0 7px;
           color: #12365e;
           font-size: 36px;
-          letter-spacing: -0.03em;
         }
 
         .subtitle {
           margin: 0 0 26px;
           color: #6b7b8e;
-          line-height: 1.55;
         }
 
         label {
@@ -491,9 +551,6 @@ export default function LoginPage() {
           border-radius: 15px;
           outline: none;
           font-size: 16px;
-          transition:
-            border-color 0.2s ease,
-            box-shadow 0.2s ease;
         }
 
         input:focus {
@@ -527,7 +584,6 @@ export default function LoginPage() {
           color: #922d2d;
           background: #fff0f0;
           font-size: 13px;
-          line-height: 1.45;
         }
 
         .login-button {
@@ -546,18 +602,8 @@ export default function LoginPage() {
             #0b4d99,
             #1378d4
           );
-          box-shadow: 0 14px 28px
-            rgba(19, 120, 212, 0.24);
-          font-size: 14px;
           font-weight: 900;
           cursor: pointer;
-          transition:
-            transform 0.2s ease,
-            opacity 0.2s ease;
-        }
-
-        .login-button:hover:not(:disabled) {
-          transform: translateY(-1px);
         }
 
         .login-button:disabled {
@@ -577,13 +623,7 @@ export default function LoginPage() {
             display: block;
             min-height: 100dvh;
             overflow: auto;
-            background:
-              linear-gradient(
-                180deg,
-                #071e42 0,
-                #0c4e99 250px,
-                #edf3f8 250px
-              );
+            background: #edf3f8;
           }
 
           .blue-panel {
@@ -608,8 +648,6 @@ export default function LoginPage() {
           .brand img {
             width: 112px;
             height: 112px;
-            padding: 8px;
-            border-radius: 25px;
           }
 
           .brand strong {
@@ -632,35 +670,10 @@ export default function LoginPage() {
             max-width: 480px;
             padding: 27px 20px;
             border-radius: 25px;
-            box-shadow: 0 20px 55px
-              rgba(13, 47, 91, 0.18);
           }
 
           h2 {
             font-size: 29px;
-          }
-
-          input {
-            min-height: 52px;
-          }
-
-          .login-button {
-            min-height: 54px;
-          }
-        }
-
-        @media (max-width: 380px) {
-          .blue-panel {
-            min-height: 225px;
-          }
-
-          .brand img {
-            width: 96px;
-            height: 96px;
-          }
-
-          .login-card {
-            padding: 24px 17px;
           }
         }
       `}</style>
