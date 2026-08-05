@@ -131,6 +131,11 @@ function DashboardContent() {
       <section className="hero-ultra">
         <div className="hero-accent hero-accent-a" />
         <div className="hero-accent hero-accent-b" />
+        <div className="hero-wave wave-one" />
+        <div className="hero-wave wave-two" />
+        <div className="hero-particle particle-one" />
+        <div className="hero-particle particle-two" />
+        <div className="hero-particle particle-three" />
 
         <div className="hero-top">
           <div>
@@ -145,7 +150,7 @@ function DashboardContent() {
         </div>
 
         <div className="hero-dashboard-grid">
-          <div className="hero-primary">
+          <div className="hero-primary animated-card delay-1">
             <div className="hero-primary-icon">
               <TrendingUp size={24} />
             </div>
@@ -157,7 +162,7 @@ function DashboardContent() {
             </div>
           </div>
 
-          <div className="hero-stat">
+          <div className="hero-stat animated-card delay-2">
             <span>Activos</span>
             <b>{activos.length}</b>
             <div className="hero-stat-line">
@@ -165,7 +170,7 @@ function DashboardContent() {
             </div>
           </div>
 
-          <div className="hero-stat">
+          <div className="hero-stat animated-card delay-3">
             <span>Avance promedio</span>
             <b>{avancePromedio}%</b>
             <div className="hero-stat-line cyan">
@@ -173,7 +178,7 @@ function DashboardContent() {
             </div>
           </div>
 
-          <div className="hero-stat">
+          <div className="hero-stat animated-card delay-4">
             <span>Pendiente</span>
             <b>{money(pendiente)}</b>
             <small>Por cobrar</small>
@@ -405,6 +410,19 @@ function DashboardContent() {
               #0b83c8 100%
             );
           box-shadow: 0 24px 60px rgba(5, 61, 119, 0.25);
+          background-size: 140% 140%;
+          animation: heroGradientMove 10s ease-in-out infinite;
+        }
+
+        @keyframes heroGradientMove {
+          0%,
+          100% {
+            background-position: 0% 50%;
+          }
+
+          50% {
+            background-position: 100% 50%;
+          }
         }
 
         .hero-accent {
@@ -429,6 +447,168 @@ function DashboardContent() {
           height: 160px;
           left: -90px;
           bottom: -110px;
+        }
+
+
+        .hero-wave {
+          position: absolute;
+          pointer-events: none;
+          border-radius: 50%;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          animation: heroPulse 6s ease-in-out infinite;
+        }
+
+        .wave-one {
+          width: 420px;
+          height: 420px;
+          right: -210px;
+          top: -190px;
+        }
+
+        .wave-two {
+          width: 310px;
+          height: 310px;
+          right: -150px;
+          top: -135px;
+          animation-delay: 1.4s;
+        }
+
+        .hero-particle {
+          position: absolute;
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: rgba(196, 240, 255, 0.95);
+          box-shadow: 0 0 18px rgba(118, 218, 255, 0.9);
+          animation: floatParticle 5s ease-in-out infinite;
+        }
+
+        .particle-one {
+          top: 22%;
+          right: 34%;
+        }
+
+        .particle-two {
+          top: 64%;
+          right: 16%;
+          animation-delay: 1.7s;
+        }
+
+        .particle-three {
+          bottom: 18%;
+          left: 42%;
+          animation-delay: 3.1s;
+        }
+
+        .animated-card {
+          animation: cardEnter 0.75s ease both;
+          transition:
+            transform 0.25s ease,
+            background 0.25s ease,
+            box-shadow 0.25s ease;
+        }
+
+        .animated-card:hover {
+          transform: translateY(-5px) scale(1.015);
+          background: rgba(255, 255, 255, 0.14);
+          box-shadow: 0 18px 38px rgba(0, 0, 0, 0.14);
+        }
+
+        .delay-1 {
+          animation-delay: 0.08s;
+        }
+
+        .delay-2 {
+          animation-delay: 0.18s;
+        }
+
+        .delay-3 {
+          animation-delay: 0.28s;
+        }
+
+        .delay-4 {
+          animation-delay: 0.38s;
+        }
+
+        .hero-primary-icon {
+          animation: iconFloat 3.2s ease-in-out infinite;
+        }
+
+        .hero-report-link {
+          transition:
+            transform 0.22s ease,
+            background 0.22s ease,
+            box-shadow 0.22s ease;
+        }
+
+        .hero-report-link:hover {
+          transform: translateY(-2px);
+          background: rgba(255, 255, 255, 0.18);
+          box-shadow: 0 12px 25px rgba(0, 0, 0, 0.14);
+        }
+
+        .hero-stat-line i {
+          animation: progressGlow 2.7s ease-in-out infinite;
+        }
+
+        @keyframes cardEnter {
+          from {
+            opacity: 0;
+            transform: translateY(18px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes heroPulse {
+          0%,
+          100% {
+            transform: scale(1);
+            opacity: 0.35;
+          }
+
+          50% {
+            transform: scale(1.08);
+            opacity: 0.68;
+          }
+        }
+
+        @keyframes floatParticle {
+          0%,
+          100% {
+            transform: translateY(0) translateX(0);
+            opacity: 0.45;
+          }
+
+          50% {
+            transform: translateY(-14px) translateX(8px);
+            opacity: 1;
+          }
+        }
+
+        @keyframes iconFloat {
+          0%,
+          100% {
+            transform: translateY(0) rotate(0deg);
+          }
+
+          50% {
+            transform: translateY(-5px) rotate(3deg);
+          }
+        }
+
+        @keyframes progressGlow {
+          0%,
+          100% {
+            filter: brightness(1);
+          }
+
+          50% {
+            filter: brightness(1.35);
+          }
         }
 
         .hero-top,
@@ -935,6 +1115,18 @@ function DashboardContent() {
 
         :global(html[data-theme='dark']) .hero-floating small {
           color: #a6b9d1;
+        }
+
+
+        @media (prefers-reduced-motion: reduce) {
+          .hero-ultra,
+          .hero-wave,
+          .hero-particle,
+          .animated-card,
+          .hero-primary-icon,
+          .hero-stat-line i {
+            animation: none !important;
+          }
         }
 
         @media (max-width: 1100px) {
