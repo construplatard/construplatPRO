@@ -297,7 +297,7 @@ export default function LoginPage() {
                 );
                 setMessage('');
               }}
-              placeholder="admin@construplata.com"
+              placeholder="INGRESE SU CORREO"
               autoComplete="email"
             />
           </label>
