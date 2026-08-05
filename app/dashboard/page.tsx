@@ -128,8 +128,12 @@ function DashboardContent() {
 
   return (
     <div className="dashboard-ultra">
+      <div className="dashboard-light-line" />
+      <div className="dashboard-circle circle-one" />
+      <div className="dashboard-circle circle-two" />
+      <div className="dashboard-circle circle-three" />
+      <div className="dashboard-circle circle-four" />
       <section className="hero-ultra">
-        <div className="hero-sheen" />
         <div className="hero-accent hero-accent-a" />
         <div className="hero-accent hero-accent-b" />
         <div className="hero-wave wave-one" />
@@ -157,7 +161,7 @@ function DashboardContent() {
         </div>
 
         <div className="hero-dashboard-grid">
-          <div className="hero-primary animated-card delay-1">
+          <div className="hero-primary">
             <div className="hero-primary-icon">
               <TrendingUp size={24} />
             </div>
@@ -175,7 +179,7 @@ function DashboardContent() {
             </div>
           </div>
 
-          <div className="hero-stat animated-card delay-2">
+          <div className="hero-stat">
             <span>Activos</span>
             <b>{activos.length}</b>
             <div className="hero-stat-line">
@@ -183,7 +187,7 @@ function DashboardContent() {
             </div>
           </div>
 
-          <div className="hero-stat animated-card delay-3">
+          <div className="hero-stat">
             <span>Avance promedio</span>
             <b>{avancePromedio}%</b>
             <div className="hero-stat-line cyan">
@@ -191,7 +195,7 @@ function DashboardContent() {
             </div>
           </div>
 
-          <div className="hero-stat animated-card delay-4">
+          <div className="hero-stat">
             <span>Pendiente</span>
             <b>{money(pendiente)}</b>
             <small>Por cobrar</small>
@@ -252,15 +256,15 @@ function DashboardContent() {
           </div>
 
           <div className="top-summary">
-            <div className="metric-tile mt-1">
+            <div className="metric-tile">
               <span>Monto contratado</span>
               <b>{money(contratado)}</b>
             </div>
-            <div className="metric-tile mt-2">
+            <div className="metric-tile">
               <span>Total cobrado</span>
               <b>{money(cobrado)}</b>
             </div>
-            <div className="metric-tile mt-3">
+            <div className="metric-tile">
               <span>Total gastado</span>
               <b>{money(gastado)}</b>
             </div>
@@ -270,7 +274,7 @@ function DashboardContent() {
             {chartItems.map((item) => {
               const height = Math.max(16, Math.round((item.value / maxValue) * 100));
               return (
-                <div className={`bar-col bar-anim ${item.className}`} key={item.label}>
+                <div className={`bar-col ${item.className}`} key={item.label}>
                   <span className="bar-value">{compactMoney(item.value)}</span>
                   <div className="bar-base">
                     <i className={item.className} style={{ height: `${height}%` }} />
@@ -291,7 +295,7 @@ function DashboardContent() {
             <BarChart3 size={22} />
           </div>
 
-          <div className="insight-card blue-bg animated-surface glow-card">
+          <div className="insight-card blue-bg">
             <div className="insight-top">
               <span>Avance físico</span>
               <strong>{avancePromedio}%</strong>
@@ -301,7 +305,7 @@ function DashboardContent() {
             </div>
           </div>
 
-          <div className="insight-card green-bg animated-surface glow-card">
+          <div className="insight-card green-bg">
             <div className="insight-top">
               <span>Proyectos aprobados</span>
               <strong>{proyectos.length}</strong>
@@ -312,11 +316,11 @@ function DashboardContent() {
           </div>
 
           <div className="mini-dual">
-            <div className="dual-card dc-1">
+            <div className="dual-card">
               <span>Disponible por cobrar</span>
               <b>{money(pendiente)}</b>
             </div>
-            <div className="dual-card dc-2">
+            <div className="dual-card">
               <span>Utilidad estimada</span>
               <b>{money(utilidad)}</b>
             </div>
@@ -340,7 +344,7 @@ function DashboardContent() {
           <div className="project-list">
             {activos.length ? (
               activos.slice(0, 4).map((item) => (
-                <Link href="/proyectos" key={item.id} className="project-item animated-surface">
+                <Link href="/proyectos" key={item.id} className="project-item">
                   <div className="project-main">
                     <div className="project-icon">
                       <CalendarRange size={18} />
@@ -407,8 +411,160 @@ function DashboardContent() {
 
       <style jsx>{`
         .dashboard-ultra {
+          position: relative;
+          isolation: isolate;
           display: grid;
           gap: 18px;
+          overflow: hidden;
+          border-radius: 30px;
+        }
+
+        .dashboard-ultra > :not(
+          .dashboard-light-line,
+          .dashboard-circle
+        ) {
+          position: relative;
+          z-index: 2;
+        }
+
+        .dashboard-light-line {
+          position: absolute;
+          z-index: 20;
+          top: -18%;
+          bottom: -18%;
+          left: -190px;
+          width: 115px;
+          pointer-events: none;
+          transform: rotate(17deg);
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.04),
+            rgba(255, 255, 255, 0.85),
+            rgba(255, 255, 255, 0.06),
+            transparent
+          );
+          filter: blur(1px);
+          opacity: 0;
+          animation: dashboardSweep 7.5s ease-in-out infinite;
+        }
+
+        .dashboard-circle {
+          position: absolute;
+          z-index: 1;
+          pointer-events: none;
+          border-radius: 50%;
+          border: 1px solid rgba(86, 190, 255, 0.13);
+          background: radial-gradient(
+            circle at 35% 35%,
+            rgba(72, 183, 255, 0.13),
+            rgba(35, 115, 210, 0.025) 58%,
+            transparent 72%
+          );
+          box-shadow:
+            inset 0 0 40px rgba(60, 175, 255, 0.04),
+            0 0 34px rgba(31, 122, 224, 0.04);
+        }
+
+        .circle-one {
+          width: 330px;
+          height: 330px;
+          top: 7%;
+          right: -170px;
+          animation: circleDriftOne 12s ease-in-out infinite;
+        }
+
+        .circle-two {
+          width: 210px;
+          height: 210px;
+          top: 43%;
+          left: -115px;
+          animation: circleDriftTwo 10s ease-in-out infinite;
+        }
+
+        .circle-three {
+          width: 150px;
+          height: 150px;
+          bottom: 8%;
+          right: 21%;
+          animation: circleDriftThree 9s ease-in-out infinite;
+        }
+
+        .circle-four {
+          width: 85px;
+          height: 85px;
+          top: 30%;
+          left: 56%;
+          border-color: rgba(131, 220, 255, 0.16);
+          animation: circleDriftFour 8s ease-in-out infinite;
+        }
+
+        @keyframes dashboardSweep {
+          0%,
+          12% {
+            left: -190px;
+            opacity: 0;
+          }
+
+          20% {
+            opacity: 0.8;
+          }
+
+          65% {
+            opacity: 0.8;
+          }
+
+          78%,
+          100% {
+            left: calc(100% + 210px);
+            opacity: 0;
+          }
+        }
+
+        @keyframes circleDriftOne {
+          0%,
+          100% {
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+
+          50% {
+            transform: translate3d(-45px, 35px, 0) scale(1.08);
+          }
+        }
+
+        @keyframes circleDriftTwo {
+          0%,
+          100% {
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+
+          50% {
+            transform: translate3d(55px, -36px, 0) scale(1.1);
+          }
+        }
+
+        @keyframes circleDriftThree {
+          0%,
+          100% {
+            transform: translate3d(0, 0, 0) rotate(0deg);
+          }
+
+          50% {
+            transform: translate3d(42px, -32px, 0) rotate(18deg);
+          }
+        }
+
+        @keyframes circleDriftFour {
+          0%,
+          100% {
+            transform: translate3d(0, 0, 0) scale(0.9);
+            opacity: 0.45;
+          }
+
+          50% {
+            transform: translate3d(-36px, 42px, 0) scale(1.18);
+            opacity: 0.9;
+          }
         }
 
         .hero-ultra {
@@ -445,24 +601,6 @@ function DashboardContent() {
             linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
           background-size: 30px 30px;
           mask-image: linear-gradient(to right, #000, transparent 88%);
-        }
-
-        .hero-sheen {
-          position: absolute;
-          top: -40%;
-          bottom: -40%;
-          width: 120px;
-          left: -180px;
-          pointer-events: none;
-          transform: rotate(18deg);
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255,255,255,.18),
-            transparent
-          );
-          filter: blur(2px);
-          animation: sheenMove 6.5s ease-in-out infinite;
         }
 
         .hero-title-row {
@@ -520,14 +658,13 @@ function DashboardContent() {
           min-width: 5px;
           border-radius: 999px;
           background: linear-gradient(180deg, #ffffff, #79dcff);
-          animation: miniBar 1.8s ease-in-out infinite;
         }
 
         .mini-bars i:nth-child(1) { height: 35%; }
-        .mini-bars i:nth-child(2) { height: 70%; animation-delay: .15s; }
-        .mini-bars i:nth-child(3) { height: 48%; animation-delay: .3s; }
-        .mini-bars i:nth-child(4) { height: 88%; animation-delay: .45s; }
-        .mini-bars i:nth-child(5) { height: 58%; animation-delay: .6s; }
+        .mini-bars i:nth-child(2) { height: 70%; }
+        .mini-bars i:nth-child(3) { height: 48%; }
+        .mini-bars i:nth-child(4) { height: 88%; }
+        .mini-bars i:nth-child(5) { height: 58%; }
 
         @keyframes sheenMove {
           0% {
@@ -1245,142 +1382,6 @@ function DashboardContent() {
           color: var(--muted);
         }
 
-        .metric-tile,
-        .dual-card,
-        .insight-card,
-        .project-item,
-        .quick-action,
-        .bar-base {
-          position: relative;
-          overflow: hidden;
-          isolation: isolate;
-        }
-
-        .metric-tile::before,
-        .dual-card::before,
-        .insight-card::before,
-        .project-item::before,
-        .quick-action::before,
-        .bar-base::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background: linear-gradient(120deg, transparent, rgba(255,255,255,.08), transparent);
-          transform: translateX(-120%);
-          animation: surfaceSweep 7s ease-in-out infinite;
-        }
-
-        .metric-tile::after,
-        .dual-card::after,
-        .insight-card::after,
-        .project-item::after,
-        .quick-action::after {
-          content: '';
-          position: absolute;
-          right: -24px;
-          top: -24px;
-          width: 78px;
-          height: 78px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(255,255,255,.08), transparent 70%);
-          pointer-events: none;
-        }
-
-        .metric-tile {
-          border: 1px solid rgba(255,255,255,.04);
-          transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
-          animation: cardFloatSoft 4.6s ease-in-out infinite;
-        }
-
-        .mt-2 { animation-delay: .4s; }
-        .mt-3 { animation-delay: .8s; }
-
-        .metric-tile:hover,
-        .dual-card:hover,
-        .insight-card:hover,
-        .project-item:hover,
-        .quick-action:hover {
-          transform: translateY(-4px);
-          border-color: rgba(114,198,255,.2);
-          box-shadow: 0 16px 36px rgba(11,86,164,.14);
-        }
-
-        .glow-card {
-          animation: cardGlow 3.2s ease-in-out infinite;
-        }
-
-        .dual-card {
-          border: 1px solid rgba(255,255,255,.04);
-          transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
-        }
-
-        .dc-1 { animation: sideBreathe 4.5s ease-in-out infinite; }
-        .dc-2 { animation: sideBreathe 4.5s ease-in-out infinite .8s; }
-
-        .bar-anim .bar-base i {
-          animation: barRise .95s ease both, barGlowFloat 2.8s ease-in-out infinite;
-        }
-
-        .bar-col:nth-child(1) .bar-base i { animation-delay: .1s, 1.2s; }
-        .bar-col:nth-child(2) .bar-base i { animation-delay: .22s, 1.45s; }
-        .bar-col:nth-child(3) .bar-base i { animation-delay: .34s, 1.7s; }
-        .bar-col:nth-child(4) .bar-base i { animation-delay: .46s, 1.95s; }
-
-        .project-item:nth-child(1),
-        .quick-action:nth-child(1) { animation: listLift .65s ease both; }
-        .project-item:nth-child(2),
-        .quick-action:nth-child(2) { animation: listLift .65s ease both .12s; }
-        .project-item:nth-child(3),
-        .quick-action:nth-child(3) { animation: listLift .65s ease both .24s; }
-        .project-item:nth-child(4) { animation: listLift .65s ease both .36s; }
-
-        .project-icon,
-        .qa-icon {
-          animation: iconPulseMini 3.5s ease-in-out infinite;
-        }
-
-        @keyframes surfaceSweep {
-          0%, 80%, 100% { transform: translateX(-120%); opacity: 0; }
-          10%, 45% { opacity: 1; }
-          60% { transform: translateX(140%); opacity: 0; }
-        }
-
-        @keyframes barRise {
-          from { height: 0 !important; opacity: .35; }
-          to { opacity: 1; }
-        }
-
-        @keyframes barGlowFloat {
-          0%,100% { filter: brightness(1) saturate(1); }
-          50% { filter: brightness(1.13) saturate(1.1); }
-        }
-
-        @keyframes cardFloatSoft {
-          0%,100% { transform: translateY(0); }
-          50% { transform: translateY(-3px); }
-        }
-
-        @keyframes cardGlow {
-          0%,100% { box-shadow: inset 0 0 0 1px rgba(255,255,255,.02); }
-          50% { box-shadow: inset 0 0 0 1px rgba(107,211,255,.18), 0 10px 26px rgba(8,83,157,.12); }
-        }
-
-        @keyframes sideBreathe {
-          0%,100% { transform: scale(1); }
-          50% { transform: scale(1.015); }
-        }
-
-        @keyframes listLift {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes iconPulseMini {
-          0%,100% { transform: scale(1); }
-          50% { transform: scale(1.06); }
-        }
-
         :global(html[data-theme='dark']) .panel,
         :global(html[data-theme='dark']) .card-stat {
           background: #0d1b2f !important;
@@ -1424,7 +1425,8 @@ function DashboardContent() {
           .hero-ultra,
           .hero-wave,
           .hero-particle,
-          .animated-card,
+          .dashboard-light-line,
+          .dashboard-circle,
           .hero-primary-icon,
           .hero-stat-line i,
           .metric-tile,
@@ -1539,11 +1541,8 @@ function CardStat({
 }) {
   return (
     <Link href={href} className={`card-stat ${tone}`}>
-      <div className="card-orb" />
-      <div className="card-shine" />
       <div className="card-top">
         <div className="card-icon">{icon}</div>
-        <span className="card-chip">Activo</span>
       </div>
 
       <div className="card-body">
@@ -1552,9 +1551,6 @@ function CardStat({
         <small>{subtitle}</small>
       </div>
 
-      <div className="card-meter">
-        <i />
-      </div>
 
       <style jsx>{`
         .card-stat {
@@ -1572,40 +1568,12 @@ function CardStat({
           box-shadow: var(--soft-shadow);
           isolation: isolate;
           transition: transform .26s ease, box-shadow .26s ease, border-color .26s ease;
-          animation: statEnter .7s ease both;
         }
 
         .card-stat:hover {
           transform: translateY(-6px) scale(1.015);
           border-color: rgba(115, 205, 255, .28);
           box-shadow: 0 18px 44px rgba(9, 75, 140, .18);
-        }
-
-        .card-orb,
-        .card-shine {
-          position: absolute;
-          pointer-events: none;
-        }
-
-        .card-orb {
-          width: 110px;
-          height: 110px;
-          top: -28px;
-          right: -18px;
-          border-radius: 50%;
-          opacity: .75;
-          filter: blur(6px);
-          animation: orbFloat 5.2s ease-in-out infinite;
-        }
-
-        .card-shine {
-          top: -20%;
-          bottom: -20%;
-          width: 70px;
-          left: -90px;
-          transform: rotate(18deg);
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
-          animation: shineRun 5.8s ease-in-out infinite;
         }
 
         .card-top {
@@ -1624,18 +1592,6 @@ function CardStat({
           place-items: center;
           border-radius: 18px;
           box-shadow: inset 0 1px 0 rgba(255,255,255,.2);
-          animation: iconBob 3s ease-in-out infinite;
-        }
-
-        .card-chip {
-          padding: 6px 9px;
-          border-radius: 999px;
-          font-size: 10px;
-          font-weight: 800;
-          color: var(--text);
-          background: rgba(255,255,255,.06);
-          border: 1px solid rgba(255,255,255,.08);
-          backdrop-filter: blur(8px);
         }
 
         .card-body {
@@ -1667,76 +1623,26 @@ function CardStat({
           line-height: 1.45;
         }
 
-        .card-meter {
-          position: relative;
-          z-index: 1;
-          height: 7px;
-          border-radius: 999px;
-          overflow: hidden;
-          background: rgba(255,255,255,.08);
-        }
-
-        .card-meter i {
-          display: block;
-          width: 68%;
-          height: 100%;
-          border-radius: inherit;
-          animation: meterMove 2.8s ease-in-out infinite;
-        }
-
         .blue .card-icon {
           color: #1c78f0;
           background: linear-gradient(135deg, #eef7ff, #dbeeff);
         }
-        .blue .card-orb { background: radial-gradient(circle, rgba(28,120,240,.36), rgba(28,120,240,.04)); }
-        .blue .card-meter i { background: linear-gradient(90deg, #5ed8ff, #1c78f0); }
 
         .cyan .card-icon {
           color: #0aaec0;
           background: linear-gradient(135deg, #e8fbfd, #d7fbff);
         }
-        .cyan .card-orb { background: radial-gradient(circle, rgba(16,198,211,.34), rgba(16,198,211,.04)); }
-        .cyan .card-meter i { background: linear-gradient(90deg, #5ef0e2, #13c2c2); }
 
         .violet .card-icon {
           color: #7752ff;
           background: linear-gradient(135deg, #f2edff, #ebe2ff);
         }
-        .violet .card-orb { background: radial-gradient(circle, rgba(122,81,255,.34), rgba(122,81,255,.04)); }
-        .violet .card-meter i { background: linear-gradient(90deg, #b794ff, #7a51ff); }
 
         .green .card-icon {
           color: #38a34d;
           background: linear-gradient(135deg, #edf9ed, #dff7df);
         }
-        .green .card-orb { background: radial-gradient(circle, rgba(78,190,92,.34), rgba(78,190,92,.04)); }
-        .green .card-meter i { background: linear-gradient(90deg, #9ae96b, #39b85d); }
 
-        @keyframes statEnter {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes orbFloat {
-          0%,100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(8px) scale(1.06); }
-        }
-
-        @keyframes shineRun {
-          0%, 15% { left: -90px; opacity: 0; }
-          30%, 60% { opacity: 1; }
-          100% { left: calc(100% + 100px); opacity: 0; }
-        }
-
-        @keyframes meterMove {
-          0%,100% { width: 58%; filter: brightness(1); }
-          50% { width: 82%; filter: brightness(1.16); }
-        }
-
-        @keyframes iconBob {
-          0%,100% { transform: translateY(0); }
-          50% { transform: translateY(-4px); }
-        }
       `}</style>
     </Link>
   );
@@ -1754,7 +1660,7 @@ function QuickAction({
   text: string;
 }) {
   return (
-    <Link href={href} className="quick-action animated-surface">
+    <Link href={href} className="quick-action">
       <div className="qa-icon">{icon}</div>
       <div className="qa-copy">
         <b>{title}</b>
